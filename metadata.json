@@ -1,0 +1,5 @@
+{
+  "name": "GPU-Verify AI",
+  "description": "An AI-powered second-hand GPU assessment suite. Analyzes physical condition and performance metrics to verify authenticity and estimate value.",
+  "requestFramePermissions": []
+}
