@@ -1,14 +1,7 @@
 import React, { useRef } from 'react';
 import { 
   Upload, X, CheckCircle, 
-  Fan,            // Front Shroud
-  ScanBarcode,    // Backplate
-  Cable,          // IO Shield
-  MemoryStick,    // PCIe Lanes
-  Zap,            // Power Connector
-  Thermometer,    // Heatsink
-  Flame,          // Furmark
-  FileSpreadsheet // GPU-Z
+  Fan, ScanBarcode, Cable, MemoryStick, Zap, Thermometer, Flame, FileSpreadsheet 
 } from 'lucide-react';
 import { ImageType, UploadedImage, IMAGE_LABELS, IMAGE_INSTRUCTIONS } from '../types';
 
@@ -19,6 +12,46 @@ interface UploadZoneProps {
   onRemove: (id: string) => void;
   required?: boolean;
 }
+
+// Helper to resize image before sending to AI (Critical for HF Free Tier)
+const compressImage = (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1024; // Optimal for Qwen2.5-VL
+        const scaleSize = MAX_WIDTH / img.width;
+        
+        if (img.width > MAX_WIDTH) {
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file); // Fallback to original
+          }
+        }, 'image/jpeg', 0.8); // 80% quality is plenty for OCR/Vision
+      };
+    };
+  });
+};
 
 const getIconForType = (type: ImageType) => {
   switch (type) {
@@ -38,16 +71,26 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ type, uploadedImage, onU
   const inputRef = useRef<HTMLInputElement>(null);
   const TypeIcon = getIconForType(type);
 
+  const processAndUpload = async (file: File) => {
+    // Only compress if it's an image
+    if (file.type.startsWith('image/')) {
+      const optimizedFile = await compressImage(file);
+      onUpload(type, optimizedFile);
+    } else {
+      onUpload(type, file);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      onUpload(type, e.target.files[0]);
+      processAndUpload(e.target.files[0]);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onUpload(type, e.dataTransfer.files[0]);
+      processAndUpload(e.dataTransfer.files[0]);
     }
   };
 
@@ -115,7 +158,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ type, uploadedImage, onU
       
       {!uploadedImage && (
         <p className="mt-2 text-[10px] text-center text-slate-600">
-          Click or drop file
+          Click or drop file (Max 1024px)
         </p>
       )}
     </div>
