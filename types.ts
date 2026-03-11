@@ -83,7 +83,7 @@ export interface GPUAssessmentResult {
   performance: PerformanceAnalysis;
   market_analysis?: MarketData;
   report: FinalReport;
-  grounding_urls?: string[];
+  grounding_urls?: string[]; // Added to store Tavily search result links
 }
 
 export enum AppStep {
