@@ -14,12 +14,15 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Types Configuration */
+    "types": ["vite/client"], 
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["src/**/*", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
