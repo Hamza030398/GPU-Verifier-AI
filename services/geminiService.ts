@@ -1,7 +1,7 @@
 import { HfInference } from "@huggingface/inference";
-import { UploadedImage, GPUAssessmentResult, ASSESSMENT_PROFILES } from "../types";
+import { UploadedImage, GPUAssessmentResult, ImageType } from "../types";
 
-// Note the VITE_ prefix for Vite compatibility
+// Vite requires the VITE_ prefix to expose variables to the client
 const hf = new HfInference(import.meta.env.VITE_HF_TOKEN);
 const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY;
 
@@ -17,7 +17,10 @@ const fileToBase64 = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
+    reader.onload = () => {
+      const base64String = (reader.result as string).split(',')[1];
+      resolve(base64String);
+    };
     reader.onerror = error => reject(error);
   });
 };
@@ -55,11 +58,15 @@ export const analyzeGPU = async (
   // 1. Get Web Market Context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2. Prepare the primary image (usually the screenshot)
-  const perfImage = images.find(img => img.type === "Performance Screenshot") || images[0];
-  const base64Image = await fileToBase64(perfImage.file);
+  // 2. Prepare the primary image (Fixed TS2367 by using Enum values)
+  const perfImage = images.find(img => 
+    img.type === ImageType.GPUZ || img.type === ImageType.FURMARK
+  ) || images[0];
+  
+  const base64Data = await fileToBase64(perfImage.file);
+  const dataUrl = `data:${perfImage.file.type};base64,${base64Data}`;
 
-  // 3. Inference call using OpenAI-compatible format
+  // 3. Inference call using Qwen2.5-VL via Hugging Face
   try {
     const response = await hf.chatCompletion({
       model: "Qwen/Qwen2.5-VL-7B-Instruct",
@@ -68,8 +75,8 @@ export const analyzeGPU = async (
         {
           role: "user",
           content: [
-            { type: "text", text: `Target: ${gpuModel}. Market Context: ${summary}` },
-            { type: "image_url", image_url: { url: base64Image } }
+            { type: "text", text: `Target GPU: ${gpuModel}. Profile: ${profileId}. Market Context: ${summary}. Analyze the attached image and provide the JSON report.` },
+            { type: "image_url", image_url: { url: dataUrl } }
           ]
         }
       ],
@@ -88,8 +95,8 @@ export const analyzeGPU = async (
     
     return result;
   } catch (error: any) {
-    if (error.message.includes("503")) {
-      throw new Error("Model is loading on Hugging Face. Please try again in 30 seconds.");
+    if (error.message?.includes("503")) {
+      throw new Error("AI Model is currently waking up on Hugging Face. Please try again in 30 seconds.");
     }
     throw error;
   }
