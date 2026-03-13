@@ -16,26 +16,32 @@ export enum ImageType {
   GPUZ = "gpuz"
 }
 
+/*
+Shorter labels reduce tokens when used in prompts
+*/
 export const IMAGE_LABELS: Record<ImageType, string> = {
-  [ImageType.FRONT_SHROUD]: "Front Shroud",
+  [ImageType.FRONT_SHROUD]: "Front",
   [ImageType.BACKPLATE]: "Backplate",
-  [ImageType.IO_SHIELD]: "I/O Shield",
-  [ImageType.PCIE_LANES]: "PCIe Lanes",
-  [ImageType.POWER_CONNECTOR]: "Power Connector",
-  [ImageType.HEATSINK]: "Heatsink Top View",
-  [ImageType.FURMARK]: "FurMark Screenshot",
-  [ImageType.GPUZ]: "GPU-Z Screenshot"
+  [ImageType.IO_SHIELD]: "I/O",
+  [ImageType.PCIE_LANES]: "PCIe",
+  [ImageType.POWER_CONNECTOR]: "Power",
+  [ImageType.HEATSINK]: "Heatsink",
+  [ImageType.FURMARK]: "FurMark",
+  [ImageType.GPUZ]: "GPU-Z"
 };
 
+/*
+Instructions kept concise to reduce token size when used in prompts
+*/
 export const IMAGE_INSTRUCTIONS: Record<ImageType, string> = {
-  [ImageType.FRONT_SHROUD]: "Capture the fans, shroud condition, and stickers.",
-  [ImageType.BACKPLATE]: "Show the full PCB back, screws, and warranty seals.",
-  [ImageType.IO_SHIELD]: "Focus on the display ports and metal bracket alignment.",
-  [ImageType.PCIE_LANES]: "Close-up of the gold connector fingers (bottom edge).",
-  [ImageType.POWER_CONNECTOR]: "Close-up of the power input pins (checking for melt).",
-  [ImageType.HEATSINK]: "Top view showing heatpipe condition and fin density.",
-  [ImageType.FURMARK]: "Screen capture of a running stress test (with temp graph).",
-  [ImageType.GPUZ]: "Screen capture of the main 'Graphics Card' tab specs."
+  [ImageType.FRONT_SHROUD]: "Fans and shroud condition.",
+  [ImageType.BACKPLATE]: "PCB back and screws.",
+  [ImageType.IO_SHIELD]: "Display ports and bracket.",
+  [ImageType.PCIE_LANES]: "Gold PCIe connector.",
+  [ImageType.POWER_CONNECTOR]: "Power pins condition.",
+  [ImageType.HEATSINK]: "Heatpipes and fin stack.",
+  [ImageType.FURMARK]: "Stress test screenshot.",
+  [ImageType.GPUZ]: "GPU-Z main specs tab."
 };
 
 export interface PhysicalSubRatings {
@@ -83,7 +89,7 @@ export interface GPUAssessmentResult {
   performance: PerformanceAnalysis;
   market_analysis?: MarketData;
   report: FinalReport;
-  grounding_urls?: string[]; // Added to store Tavily search result links
+  grounding_urls?: string[];
 }
 
 export enum AppStep {
@@ -100,29 +106,32 @@ export interface AssessmentProfile {
   focus_areas: string[];
 }
 
+/*
+Profiles unchanged to keep UI behavior stable
+*/
 export const ASSESSMENT_PROFILES: AssessmentProfile[] = [
   {
     id: "universal",
     name: "Universal Standard",
-    description: "General purpose assessment for any GPU model.",
-    focus_areas: ["PCB Damage", "Fan Integrity", "Port Oxidation"]
+    description: "General GPU condition assessment.",
+    focus_areas: ["PCB Damage", "Fan Wear", "Port Oxidation"]
   },
   {
     id: "rtx_40_series",
-    name: "NVIDIA RTX 40-Series Specialist",
-    description: "Targeted analysis for high-power cards (4090/4080).",
-    focus_areas: ["12VHPWR Connector Melting", "PCB Cracking (Sag)", "Heavy Flow-through Dust"]
+    name: "RTX 40-Series Specialist",
+    description: "Checks for high-power GPU risks.",
+    focus_areas: ["12VHPWR Melt", "PCB Sag", "Flow-through Dust"]
   },
   {
     id: "mining_risk",
     name: "Mining Risk Assessment",
-    description: "Optimized to detect signs of prolonged 24/7 mining usage.",
-    focus_areas: ["VRAM Discoloration", "Thermal Pad Oil Leaks", "BIOS Modifications"]
+    description: "Detects heavy mining wear.",
+    focus_areas: ["VRAM Discoloration", "Thermal Pad Oil", "BIOS Mods"]
   },
   {
     id: "vintage_legacy",
     name: "Legacy/Vintage Collector",
-    description: "For older GPUs (GTX 900 series and older).",
-    focus_areas: ["Capacitor Swelling", "Thermal Paste Cementing", "Fan Bearing Noise"]
+    description: "For older GPUs.",
+    focus_areas: ["Capacitor Swell", "Thermal Paste Aging", "Fan Bearings"]
   }
 ];
