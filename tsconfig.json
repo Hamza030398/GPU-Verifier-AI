@@ -14,8 +14,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Types Configuration */
-    "types": ["vite/client"], 
+    /* Types Configuration - ADDED "node" HERE */
+    "types": ["vite/client", "node"], 
 
     /* Linting */
     "strict": true,
@@ -23,6 +23,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "**/*.ts", "**/*.tsx"],
+  "include": ["src/**/*", "api/**/*", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
