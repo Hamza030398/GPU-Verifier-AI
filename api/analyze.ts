@@ -6,7 +6,11 @@ export default async function handler(req: any, res: any) {
   }
 
   const { base64Image, gpuModel, summary, profileId } = req.body;
-  const hf = new HfInference(process.env.VITE_HF_TOKEN);
+  
+  // Point to the mandatory new Hugging Face Inference Router
+  const hf = new HfInference(process.env.VITE_HF_TOKEN, {
+    endpoint: "https://router.huggingface.co"
+  });
 
   const BASE_SYSTEM_INSTRUCTION = `You are GPU-Verify AI, an elite hardware expert. 
 Your goal is to extract technical telemetry from GPU images and provide a market audit.
