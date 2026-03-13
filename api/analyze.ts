@@ -1,5 +1,5 @@
 // Import from huggingface_hub
-import { InferenceClient } from "huggingface_hub";
+import { InferenceClient } from "@huggingface/inference";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
