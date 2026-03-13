@@ -32,7 +32,7 @@ No markdown. No explanations. JSON only.
 
   try {
     const response = await client.chatCompletion({
-      model: "Qwen/Qwen2.5-VL-7B-Instruct",
+      model: "Salesforce/blip-image-captioning-large",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         {
