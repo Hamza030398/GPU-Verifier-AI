@@ -1,4 +1,3 @@
-// Import from huggingface_hub
 import { InferenceClient } from "@huggingface/inference";
 
 export default async function handler(req: any, res: any) {
@@ -12,11 +11,9 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
-  const client = new InferenceClient({
-    accessToken: process.env.VITE_HF_TOKEN,
-  });
+  // Pass token as a string, not an object
+  const client = new InferenceClient(process.env.VITE_HF_TOKEN || "");
 
-  // Shorter prompt to reduce tokens
   const SYSTEM_PROMPT = `
 You are GPUVerify AI. Extract GPU telemetry from screenshots and return ONLY JSON.
 
@@ -54,12 +51,11 @@ No markdown. No explanations. JSON only.
           ],
         },
       ],
-      max_tokens: 500,   // reduced from 1200
+      max_tokens: 500,
       temperature: 0.1,
     });
 
     const result = response?.choices?.[0]?.message?.content || "{}";
-
     res.status(200).json(result);
 
   } catch (e: any) {
