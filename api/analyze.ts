@@ -1,4 +1,4 @@
-import { HfInference } from "@huggingface/inference";
+import { InferenceClient } from "@huggingface/inference";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -6,10 +6,10 @@ export default async function handler(req: any, res: any) {
   }
 
   const { base64Image, gpuModel, summary, profileId } = req.body;
-  
-  // Point to the mandatory new Hugging Face Inference Router
-  const hf = new HfInference(process.env.VITE_HF_TOKEN, {
-    endpoint: "https://router.huggingface.co"
+
+  // InferenceClient handles the routing automatically
+  const client = new InferenceClient({
+    accessToken: process.env.VITE_HF_TOKEN,
   });
 
   const BASE_SYSTEM_INSTRUCTION = `You are GPU-Verify AI, an elite hardware expert. 
@@ -18,7 +18,7 @@ Analyze: Core/Memory Clocks, VBIOS version, Subvendor, and Temperatures.
 ALWAYS return only a valid JSON object. Do not include markdown code blocks or text outside the JSON.`;
 
   try {
-    const response = await hf.chatCompletion({
+    const response = await client.chatCompletion({
       model: "Qwen/Qwen2.5-VL-7B-Instruct",
       messages: [
         { role: "system", content: BASE_SYSTEM_INSTRUCTION },
