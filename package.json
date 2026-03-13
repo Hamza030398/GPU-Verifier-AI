@@ -8,13 +8,13 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
- "dependencies": {
+  "dependencies": {
   "@huggingface/hub": "^0.27.3",
   "react": "^18.3.1",
   "react-dom": "^18.3.1",
   "lucide-react": "^0.344.0",
   "recharts": "^2.12.2"
-}
+  }
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.66",
