@@ -26,10 +26,10 @@ export default async function handler(req: any, res: any) {
     );
 
     // Step 1: Image → text (free model)
-    const imageDescriptionResponse = await client.imageToText({
-      model: "Salesforce/blip-image-captioning-large",
-      inputs: imageBlob,
-    });
+   const imageDescriptionResponse = await client.imageToText({
+  model: "nlpconnect/vit-gpt2-image-captioning",
+  inputs: imageBlob,
+});
 
     const descriptionText =
       typeof imageDescriptionResponse === "string"
