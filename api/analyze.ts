@@ -19,18 +19,24 @@ export default async function handler(req: any, res: any) {
   const client = new InferenceClient(hfToken);
 
   try {
-    // Step 1: Use image-to-text model to describe the image
+    // ✅ Convert base64 → Blob (fixes TS + runtime)
+    const imageBlob = new Blob(
+      [Buffer.from(base64Image, "base64")],
+      { type: "image/png" }
+    );
+
+    // Step 1: Image → text (free model)
     const imageDescriptionResponse = await client.imageToText({
       model: "Salesforce/blip-image-captioning-large",
-      inputs: Buffer.from(base64Image, "base64"),
+      inputs: imageBlob,
     });
 
-    // Extract description (ensure it is string)
-    const descriptionText = typeof imageDescriptionResponse === "string" 
-      ? imageDescriptionResponse 
-      : JSON.stringify(imageDescriptionResponse);
+    const descriptionText =
+      typeof imageDescriptionResponse === "string"
+        ? imageDescriptionResponse
+        : JSON.stringify(imageDescriptionResponse);
 
-    // Step 2: Use a text model to turn the description into JSON
+    // Step 2: Text → structured JSON (free model)
     const prompt = `
 You are GPUVerify AI. Extract GPU telemetry from the following description and return ONLY JSON with these fields:
 - gpu_model_detected
@@ -55,7 +61,9 @@ Return JSON only. No markdown.
       max_tokens: 300,
     });
 
-    const result = jsonResponse?.choices?.[0]?.message?.content || "{}";
+    const result =
+      jsonResponse?.choices?.[0]?.message?.content || "{}";
+
     res.status(200).json(result);
 
   } catch (e: any) {
