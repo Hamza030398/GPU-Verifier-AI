@@ -11,13 +11,28 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
-  // Pass token as a string, not an object
-  const client = new InferenceClient(process.env.VITE_HF_TOKEN || "");
+  const hfToken = process.env.HF_TOKEN;
+  if (!hfToken) {
+    return res.status(500).json({ error: "HF_TOKEN not configured" });
+  }
 
-  const SYSTEM_PROMPT = `
-You are GPUVerify AI. Extract GPU telemetry from screenshots and return ONLY JSON.
+  const client = new InferenceClient(hfToken);
 
-Fields to detect:
+  try {
+    // Step 1: Use image-to-text model to describe the image
+    const imageDescriptionResponse = await client.imageToText({
+      model: "Salesforce/blip-image-captioning-large",
+      inputs: `data:image/png;base64,${base64Image}`,
+    });
+
+    // Extract description (ensure it is string)
+    const descriptionText = typeof imageDescriptionResponse === "string" 
+      ? imageDescriptionResponse 
+      : JSON.stringify(imageDescriptionResponse);
+
+    // Step 2: Use a text model to turn the description into JSON
+    const prompt = `
+You are GPUVerify AI. Extract GPU telemetry from the following description and return ONLY JSON with these fields:
 - gpu_model_detected
 - core_clock
 - memory_clock
@@ -27,38 +42,24 @@ Fields to detect:
 - authenticity_score (0-100)
 - notes
 
-No markdown. No explanations. JSON only.
+Description:
+${descriptionText}
+
+Return JSON only. No markdown.
 `;
 
-  try {
-    const response = await client.chatCompletion({
-      model: "Salesforce/blip-image-captioning-large",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `GPU:${gpuModel} | Profile:${profileId} | Market:${summary}. Extract telemetry from image.`,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/png;base64,${base64Image}`,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 500,
+    const jsonResponse = await client.chatCompletion({
+      model: "google/flan-t5-small",
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.1,
+      max_tokens: 300,
     });
 
-    const result = response?.choices?.[0]?.message?.content || "{}";
+    const result = jsonResponse?.choices?.[0]?.message?.content || "{}";
     res.status(200).json(result);
 
   } catch (e: any) {
+    console.error("Inference error:", e);
     res.status(500).json({
       error: e.message || "Inference failed",
     });
