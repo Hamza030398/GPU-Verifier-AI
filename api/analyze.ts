@@ -22,7 +22,7 @@ export default async function handler(req: any, res: any) {
     // Step 1: Use image-to-text model to describe the image
     const imageDescriptionResponse = await client.imageToText({
       model: "Salesforce/blip-image-captioning-large",
-      inputs: `data:image/png;base64,${base64Image}`,
+      inputs: Buffer.from(base64Image, "base64"),
     });
 
     // Extract description (ensure it is string)
