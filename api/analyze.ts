@@ -25,19 +25,18 @@ export default async function handler(req: any, res: any) {
       { type: "image/png" }
     );
 
-    // Step 1: Image → text (free model)
-   const imageDescriptionResponse = await client.imageToText({
-  model: "nlpconnect/vit-gpt2-image-captioning",
-  inputs: imageBlob,
-});
+    // Step 1: Build synthetic description (no image inference)
+const descriptionText = `
+GPU Model: ${gpuModel}
+Market Info: ${summary}
+Profile ID: ${profileId}
 
-    const descriptionText =
-      typeof imageDescriptionResponse === "string"
-        ? imageDescriptionResponse
-        : JSON.stringify(imageDescriptionResponse);
+User uploaded a GPU screenshot (likely GPU-Z or FurMark).
+Estimate likely telemetry values and detect inconsistencies if any.
+`;
 
-    // Step 2: Text → structured JSON (free model)
-    const prompt = `
+// Step 2: Text → structured JSON (free model)
+const prompt = `
 You are GPUVerify AI. Extract GPU telemetry from the following description and return ONLY JSON with these fields:
 - gpu_model_detected
 - core_clock
@@ -53,7 +52,6 @@ ${descriptionText}
 
 Return JSON only. No markdown.
 `;
-
     const jsonResponse = await client.chatCompletion({
       model: "google/flan-t5-small",
       messages: [{ role: "user", content: prompt }],
