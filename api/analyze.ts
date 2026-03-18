@@ -1,4 +1,5 @@
-import { InferenceClient } from "@huggingface/inference";
+// Use direct HF API fetch instead of InferenceClient due to provider issues
+const HF_API_URL = "https://api-inference.huggingface.co/models/";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -15,8 +16,6 @@ export default async function handler(req: any, res: any) {
   if (!hfToken) {
     return res.status(500).json({ error: "HF_TOKEN not configured" });
   }
-
-  const client = new InferenceClient(hfToken);
 
   try {
     // ✅ Convert base64 → Blob (fixes TS + runtime)
@@ -52,16 +51,33 @@ ${descriptionText}
 
 Return JSON only. No markdown.
 `;
-    const jsonResponse = await client.textGeneration({
-      model: "gpt2",
-      inputs: prompt,
-      parameters: {
-        temperature: 0.1,
-        max_new_tokens: 300
-      }
+    // Direct API call to HF inference endpoint
+    const model = "google/flan-t5-small";
+    const response = await fetch(`${HF_API_URL}${model}`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${hfToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          temperature: 0.1,
+          max_new_tokens: 300
+        }
+      })
     });
 
-    const result = jsonResponse?.generated_text || "{}";
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HF API error ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    // HF text generation returns array of objects with generated_text
+    const result = Array.isArray(data) && data[0]?.generated_text 
+      ? data[0].generated_text 
+      : data.generated_text || "{}";
 
     res.status(200).json(result);
 
