@@ -52,29 +52,50 @@ ${descriptionText}
 
 Return JSON only. No markdown.
 `;
-    const jsonResponse = await client.chatCompletion({
+    const jsonResponse = await client.textGeneration({
       model: "google/flan-t5-small",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.1,
-      max_tokens: 300,
+      inputs: prompt,
+      parameters: {
+        temperature: 0.1,
+        max_new_tokens: 300
+      }
     });
 
-    const result =
-      jsonResponse?.choices?.[0]?.message?.content || "{}";
+    const result = jsonResponse?.generated_text || "{}";
 
     res.status(200).json(result);
 
   } catch (e: any) {
     console.error("Inference error:", e);
-    // Log more details for debugging
-    if (e.response) {
-      console.error("Error response:", e.response);
+    
+    // Check for specific HTTP errors
+    const statusCode = e.response?.status || e.status;
+    const errorMessage = e.message || "";
+    
+    // Rate limit detection
+    if (statusCode === 429 || errorMessage.includes("rate limit")) {
+      return res.status(429).json({
+        error: "Hugging Face rate limit exceeded. Free tier allows limited requests per hour. Please wait a few minutes and try again."
+      });
     }
-    if (e.message) {
-      console.error("Error message:", e.message);
+    
+    // Model loading/cold start
+    if (statusCode === 503 || errorMessage.includes("loading") || errorMessage.includes("waking up")) {
+      return res.status(503).json({
+        error: "Model is loading on Hugging Face (free tier cold start). This takes ~30-60 seconds. Please retry shortly."
+      });
     }
+    
+    // Authentication errors
+    if (statusCode === 401 || statusCode === 403) {
+      return res.status(401).json({
+        error: "Hugging Face authentication failed. Check HF_TOKEN is valid."
+      });
+    }
+    
     res.status(500).json({
-      error: e.message || "Inference failed",
+      error: errorMessage || "Inference failed",
+      statusCode: statusCode,
       details: e.response?.data || "No additional details"
     });
   }
