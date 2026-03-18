@@ -51,9 +51,9 @@ ${descriptionText}
 
 Return JSON only. No markdown.
 `;
-    // Direct API call to HF inference endpoint
+    // Direct API call to HF inference endpoint via router
     const model = "google/flan-t5-small";
-    const response = await fetch(`${HF_API_URL}${model}`, {
+    const response = await fetch(`${HF_API_URL}hf-inference/models/${model}`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${hfToken}`,
