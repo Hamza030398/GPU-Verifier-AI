@@ -1,5 +1,5 @@
 // Use direct HF API fetch instead of InferenceClient due to provider issues
-const HF_API_URL = "https://api-inference.huggingface.co/models/";
+const HF_API_URL = "https://router.huggingface.co/";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
