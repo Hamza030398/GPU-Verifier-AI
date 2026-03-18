@@ -53,7 +53,7 @@ ${descriptionText}
 Return JSON only. No markdown.
 `;
     const jsonResponse = await client.textGeneration({
-      model: "t5-small",
+      model: "gpt2",
       inputs: prompt,
       parameters: {
         temperature: 0.1,
