@@ -11,7 +11,7 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
-  const hfToken = process.env.HF_TOKEN;
+  const hfToken = process.env.HF_TOKEN || process.env.VITE_HF_TOKEN;
   if (!hfToken) {
     return res.status(500).json({ error: "HF_TOKEN not configured" });
   }
@@ -66,8 +66,16 @@ Return JSON only. No markdown.
 
   } catch (e: any) {
     console.error("Inference error:", e);
+    // Log more details for debugging
+    if (e.response) {
+      console.error("Error response:", e.response);
+    }
+    if (e.message) {
+      console.error("Error message:", e.message);
+    }
     res.status(500).json({
       error: e.message || "Inference failed",
+      details: e.response?.data || "No additional details"
     });
   }
 }
