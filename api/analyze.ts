@@ -1,5 +1,5 @@
 // Use direct HF API fetch instead of InferenceClient due to provider issues
-const HF_API_URL = "https://router.huggingface.co/";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -12,9 +12,9 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
-  const hfToken = process.env.HF_TOKEN || process.env.VITE_HF_TOKEN;
-  if (!hfToken) {
-    return res.status(500).json({ error: "HF_TOKEN not configured" });
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "OPENROUTER_API_KEY not configured" });
   }
 
   try {
@@ -33,12 +33,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Free vision model through HF Router (using hyperbolic provider for free tier)
-    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct:hyperbolic";
-    const response = await fetch(`${HF_API_URL}v1/chat/completions`, {
+    // Free vision model - NVIDIA Nemotron Embed VL (1B parameters, fast & efficient)
+    const model = "nvidia/llama-nemotron-embed-vl-1b-v2";
+    const response = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${hfToken}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -53,7 +53,7 @@ export default async function handler(req: any, res: any) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HF API error ${response.status}: ${errorText}`);
+      throw new Error(`OpenRouter API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -63,30 +63,26 @@ export default async function handler(req: any, res: any) {
     res.status(200).json(result);
 
   } catch (e: any) {
-    console.error("Inference error:", e);
+    console.error("OpenRouter error:", e);
     
-    // Check for specific HTTP errors
     const statusCode = e.response?.status || e.status;
     const errorMessage = e.message || "";
     
-    // Rate limit detection
     if (statusCode === 429 || errorMessage.includes("rate limit")) {
       return res.status(429).json({
-        error: "Hugging Face rate limit exceeded. Free tier allows limited requests per hour. Please wait a few minutes and try again."
+        error: "OpenRouter rate limit exceeded. Please wait and try again."
       });
     }
     
-    // Model loading/cold start
-    if (statusCode === 503 || errorMessage.includes("loading") || errorMessage.includes("waking up")) {
+    if (statusCode === 503) {
       return res.status(503).json({
-        error: "Model is loading on Hugging Face (free tier cold start). This takes ~30-60 seconds. Please retry shortly."
+        error: "Model is temporarily unavailable. Please retry shortly."
       });
     }
     
-    // Authentication errors
     if (statusCode === 401 || statusCode === 403) {
       return res.status(401).json({
-        error: "Hugging Face authentication failed. Check HF_TOKEN is valid."
+        error: "OpenRouter authentication failed. Check OPENROUTER_API_KEY is valid."
       });
     }
     
