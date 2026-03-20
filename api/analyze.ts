@@ -33,8 +33,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Free vision model through HF Router (using sambanova provider for free tier)
-    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct:sambanova";
+    // Free vision model through HF Router (using hyperbolic provider for free tier)
+    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct:hyperbolic";
     const response = await fetch(`${HF_API_URL}v1/chat/completions`, {
       method: "POST",
       headers: {
