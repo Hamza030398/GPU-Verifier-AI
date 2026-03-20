@@ -1,4 +1,4 @@
-import { UploadedImage, GPUAssessmentResult } from "../types";
+import { UploadedImage, GPUAssessmentResult, ImageType } from "../types";
 
 /**
  * Compress and resize image before converting to base64
@@ -89,9 +89,14 @@ export const analyzeGPU = async (
   // 1️⃣ Fetch market context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2️⃣ Compress and convert ALL images (parallel for speed)
+  // 2️⃣ Filter to only technical images (GPU-Z + FurMark) for AI analysis
+  const technicalImages = images.filter(img => 
+    img.type === ImageType.GPUZ || img.type === ImageType.FURMARK
+  );
+
+  // 3️⃣ Compress and convert technical images only (reduces token usage)
   const base64Images = await Promise.all(
-    images.map(img => compressAndConvert(img.file))
+    technicalImages.map(img => compressAndConvert(img.file))
   );
 
   // 3️⃣ Send all images to Vercel serverless API
