@@ -53,18 +53,20 @@ Return JSON only. No markdown.
 `;
     // Direct API call to HF inference endpoint via router
     const model = "google/flan-t5-small";
-    const response = await fetch(`${HF_API_URL}v1/models/${model}`, {
+    const response = await fetch(`${HF_API_URL}v1/chat/completions`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${hfToken}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          temperature: 0.1,
-          max_new_tokens: 300
-        }
+        model: model,
+        messages: [
+          { role: "system", content: "You are GPUVerify AI. Return ONLY JSON." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 300
       })
     });
 
@@ -74,10 +76,8 @@ Return JSON only. No markdown.
     }
 
     const data = await response.json();
-    // HF text generation returns array of objects with generated_text
-    const result = Array.isArray(data) && data[0]?.generated_text 
-      ? data[0].generated_text 
-      : data.generated_text || "{}";
+    // OpenAI format returns choices array with message.content
+    const result = data.choices?.[0]?.message?.content || "{}";
 
     res.status(200).json(result);
 
