@@ -45,17 +45,14 @@ const App: React.FC = () => {
     setIsColdStarting(false);
 
     try {
+      console.log("Starting analysis with", images.length, "images");
       const result = await analyzeGPU(images, gpuModel, selectedProfileId);
+      console.log("Analysis result:", result);
       setResult(result);
       setStep(AppStep.RESULTS);
     } catch (err: any) {
-      // Specific handling for Hugging Face Free Tier "Waking Up"
-      if (err.message.includes("30 seconds") || err.message.includes("503")) {
-        setIsColdStarting(true);
-        setError("The AI model is currently waking up on Hugging Face. This takes about 30 seconds for the free tier.");
-      } else {
-        setError(err.message || "An unexpected error occurred during analysis.");
-      }
+      console.error("Analysis error:", err);
+      setError(err.message || "An unexpected error occurred during analysis.");
       setStep(AppStep.UPLOAD_PERFORMANCE); 
     } finally {
       setIsAnalyzing(false);
