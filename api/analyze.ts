@@ -1,5 +1,5 @@
 // Use direct HF API fetch instead of InferenceClient due to provider issues
-const HF_API_URL = "https://api-inference.huggingface.co/";
+const HF_API_URL = "https://router.huggingface.co/";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -53,7 +53,7 @@ Return JSON only. No markdown.
 `;
     // Direct API call to HF inference endpoint via router
     const model = "google/flan-t5-small";
-    const response = await fetch(`${HF_API_URL}models/${model}`, {
+    const response = await fetch(`${HF_API_URL}v1/models/${model}`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${hfToken}`,
