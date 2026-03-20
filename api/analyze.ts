@@ -33,8 +33,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Free vision model - NVIDIA Nemotron Embed VL (1B parameters, fast & efficient)
-    const model = "nvidia/llama-nemotron-embed-vl-1b-v2";
+    // Free vision model - Llama 3.2 11B Vision (supports chat/completions)
+    const model = "meta-llama/llama-3.2-11b-vision-instruct";
     const response = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
       method: "POST",
       headers: {
