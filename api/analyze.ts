@@ -1,5 +1,5 @@
 // Use direct HF API fetch instead of InferenceClient due to provider issues
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -12,9 +12,9 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+    return res.status(500).json({ error: "OPENROUTER_API_KEY not configured" });
   }
 
   try {
@@ -33,33 +33,21 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Free vision model - Gemini 2.0 Flash (fast, accurate, free tier)
-    // No model variable needed for Gemini endpoint
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    // Free vision model on OpenRouter
+    const model = "meta-llama/llama-3.2-11b-vision-instruct";
+    const response = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        contents: [{
-          parts: content.map(c => {
-            if (c.type === "text") return { text: c.text };
-            if (c.type === "image_url") {
-              const base64Data = c.image_url.url.replace("data:image/jpeg;base64,", "").replace("data:image/png;base64,", "");
-              return {
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Data
-                }
-              };
-            }
-            return {};
-          })
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 500
-        }
+        model: model,
+        messages: [
+          { role: "user", content: content }
+        ],
+        temperature: 0.1,
+        max_tokens: 500
       })
     });
 
@@ -69,32 +57,26 @@ export default async function handler(req: any, res: any) {
     }
 
     const data = await response.json();
-    // Gemini format returns candidates with content.parts
-    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    // OpenAI format returns choices array with message.content
+    const result = data.choices?.[0]?.message?.content || "{}";
 
     res.status(200).json(result);
 
   } catch (e: any) {
-    console.error("Gemini error:", e);
+    console.error("OpenRouter error:", e);
     
     const statusCode = e.response?.status || e.status;
     const errorMessage = e.message || "";
     
     if (statusCode === 429) {
       return res.status(429).json({
-        error: "Gemini rate limit exceeded. Free tier: 15 requests/min, 1500/day."
+        error: "OpenRouter rate limit exceeded. Please wait and try again."
       });
     }
     
-    if (statusCode === 400 && errorMessage.includes("API key")) {
+    if (statusCode === 401 || statusCode === 403) {
       return res.status(401).json({
-        error: "Invalid Gemini API key. Check GEMINI_API_KEY."
-      });
-    }
-    
-    if (statusCode === 403) {
-      return res.status(403).json({
-        error: "Gemini API access denied. Enable Generative Language API in Google Cloud."
+        error: "OpenRouter authentication failed. Check OPENROUTER_API_KEY is valid."
       });
     }
     
