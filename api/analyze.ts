@@ -6,9 +6,9 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { base64Image, gpuModel, summary, profileId } = req.body;
+  const { base64Images, gpuModel, summary, profileId } = req.body;
 
-  if (!base64Image) {
+  if (!base64Images || !Array.isArray(base64Images) || base64Images.length === 0) {
     return res.status(400).json({ error: "Image data missing" });
   }
 
@@ -18,41 +18,23 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // ✅ Convert base64 → Blob (fixes TS + runtime)
-    const imageBlob = new Blob(
-      [Buffer.from(base64Image, "base64")],
-      { type: "image/png" }
-    );
+    // Token-efficient prompt - minimal text, all images in one request
+    const content: any[] = [
+      { type: "text", text: `GPU: ${gpuModel}. Analyze these ${base64Images.length} GPU screenshots (GPU-Z/FurMark) and extract: model, core clock, memory clock, vbios, subvendor, temp, authenticity score 0-100, notes. Return JSON only.` }
+    ];
 
-    // Step 1: Build synthetic description (no image inference)
-const descriptionText = `
-GPU Model: ${gpuModel}
-Market Info: ${summary}
-Profile ID: ${profileId}
+    // Add all images to content array
+    for (const base64 of base64Images) {
+      content.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/png;base64,${base64}`
+        }
+      });
+    }
 
-User uploaded a GPU screenshot (likely GPU-Z or FurMark).
-Estimate likely telemetry values and detect inconsistencies if any.
-`;
-
-// Step 2: Text → structured JSON (free model)
-const prompt = `
-You are GPUVerify AI. Extract GPU telemetry from the following description and return ONLY JSON with these fields:
-- gpu_model_detected
-- core_clock
-- memory_clock
-- vbios
-- subvendor
-- temperature
-- authenticity_score (0-100)
-- notes
-
-Description:
-${descriptionText}
-
-Return JSON only. No markdown.
-`;
-    // Direct API call to HF inference endpoint via router
-    const model = "google/flan-t5-small";
+    // Free vision model through HF Router (using sambanova provider for free tier)
+    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct:sambanova";
     const response = await fetch(`${HF_API_URL}v1/chat/completions`, {
       method: "POST",
       headers: {
@@ -62,11 +44,10 @@ Return JSON only. No markdown.
       body: JSON.stringify({
         model: model,
         messages: [
-          { role: "system", content: "You are GPUVerify AI. Return ONLY JSON." },
-          { role: "user", content: prompt }
+          { role: "user", content: content }
         ],
         temperature: 0.1,
-        max_tokens: 300
+        max_tokens: 500
       })
     });
 

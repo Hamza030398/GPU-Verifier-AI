@@ -1,20 +1,46 @@
-import { UploadedImage, GPUAssessmentResult, ImageType } from "../types";
+import { UploadedImage, GPUAssessmentResult } from "../types";
 
 /**
- * Convert File → Base64 (remove prefix)
+ * Compress and resize image before converting to base64
+ * Reduces token usage while maintaining quality for vision tasks
  */
-const fileToBase64 = async (file: File): Promise<string> => {
+const compressAndConvert = async (file: File, maxWidth: number = 1024, quality: number = 0.85): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    const img = new Image();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    reader.readAsDataURL(file);
+    if (!ctx) {
+      reject(new Error("Canvas context not available"));
+      return;
+    }
 
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      resolve(base64);
+    img.onload = () => {
+      // Calculate new dimensions maintaining aspect ratio
+      let { width, height } = img;
+      
+      if (width > maxWidth || height > maxWidth) {
+        if (width > height) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else {
+          width = Math.round((width * maxWidth) / height);
+          height = maxWidth;
+        }
+      }
+
+      // Resize image
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to compressed base64
+      const compressedBase64 = canvas.toDataURL("image/jpeg", quality).split(",")[1];
+      resolve(compressedBase64);
     };
 
-    reader.onerror = error => reject(error);
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
   });
 };
 
@@ -49,25 +75,6 @@ async function getMarketData(gpuModel: string) {
   }
 }
 
-/**
- * Select best image for AI analysis
- * Prefer GPUZ or FurMark screenshots
- */
-function selectPrimaryImage(images: UploadedImage[]) {
-  const perfImage = images.find(
-    img => img.type === ImageType.GPUZ
-  );
-
-  if (perfImage) return perfImage;
-
-  const furmark = images.find(
-    img => img.type === ImageType.FURMARK
-  );
-
-  if (furmark) return furmark;
-
-  return images[0];
-}
 
 export const analyzeGPU = async (
   images: UploadedImage[],
@@ -82,18 +89,17 @@ export const analyzeGPU = async (
   // 1️⃣ Fetch market context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2️⃣ Choose best image
-  const primaryImage = selectPrimaryImage(images);
+  // 2️⃣ Compress and convert ALL images (parallel for speed)
+  const base64Images = await Promise.all(
+    images.map(img => compressAndConvert(img.file))
+  );
 
-  // 3️⃣ Convert image to base64
-  const base64Image = await fileToBase64(primaryImage.file);
-
-  // 4️⃣ Send to Vercel serverless API
+  // 3️⃣ Send all images to Vercel serverless API
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      base64Image,
+      base64Images,
       gpuModel,
       summary,
       profileId
