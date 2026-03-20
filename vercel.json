@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/analyze.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "routes": [
     {
       "src": "/api/analyze",
