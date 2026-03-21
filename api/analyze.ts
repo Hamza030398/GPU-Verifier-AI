@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // Free vision model on Together AI - Llama 3.2 Vision
-    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct";
+    const model = "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo";
     const response = await fetch(`${TOGETHER_API_URL}/chat/completions`, {
       method: "POST",
       headers: {
