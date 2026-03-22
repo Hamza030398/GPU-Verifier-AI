@@ -81,22 +81,72 @@ export const analyzeGPU = async (
 
   try {
     // content is the text string from Gemini
-    let jsonStr: string;
+    let textContent: string;
     
     if (typeof content === "string") {
-      // Extract JSON object from text response
-      const match = content.match(/\{[\s\S]*\}/);
-      jsonStr = match ? match[0] : content;
+      textContent = content;
+    } else if (content && typeof content === "object") {
+      // If it's already an object from the API, use it directly
+      if (content.physical && content.performance && content.report) {
+        parsed = content as GPUAssessmentResult;
+        parsed.grounding_urls = urls;
+        return parsed;
+      }
+      textContent = JSON.stringify(content);
     } else {
-      // Already an object
-      jsonStr = JSON.stringify(content);
+      textContent = String(content);
+    }
+    
+    // Remove markdown code blocks if present (```json ... ```))
+    textContent = textContent.replace(/```json\n?/gi, "").replace(/```\n?/g, "").trim();
+    
+    // Try to find JSON object in the text
+    const match = textContent.match(/\{[\s\S]*\}/);
+    let jsonStr = match ? match[0] : textContent;
+    
+    // Try parsing
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (parseError) {
+      // If that fails, try to extract just the outermost braces
+      const firstBrace = textContent.indexOf('{');
+      const lastBrace = textContent.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+        jsonStr = textContent.substring(firstBrace, lastBrace + 1);
+        parsed = JSON.parse(jsonStr);
+      } else {
+        throw parseError;
+      }
     }
 
-    parsed = JSON.parse(jsonStr || "{}");
-
-  } catch (e) {
-    console.error("JSON parse error:", e, "Content:", content);
-    throw new Error("Failed to parse AI response.");
+  } catch (e: any) {
+    console.error("JSON parse error:", e, "Raw content:", content);
+    // Return a fallback result showing the error
+    parsed = {
+      physical: {
+        overall_physical_rating: 0,
+        sub_ratings: { cleanliness: 0, structural_integrity: 0, electrical_safety: 0 },
+        ai_feedback_comments: "Error: Could not parse AI response. Raw response: " + JSON.stringify(content).slice(0, 200)
+      },
+      performance: {
+        authenticity_status: "Unknown",
+        performance_percentile: 0,
+        thermal_health_score: 0,
+        validation_notes: "Parse error occurred"
+      },
+      market_analysis: {
+        average_price: "N/A",
+        price_range: "N/A",
+        currency: "USD",
+        model_identified: "Parse Error"
+      },
+      report: {
+        overall_score: 0,
+        market_value_adjustment: 0,
+        verdict: "Error"
+      },
+      grounding_urls: urls
+    };
   }
 
   // Attach search sources
