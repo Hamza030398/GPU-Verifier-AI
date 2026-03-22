@@ -39,7 +39,7 @@ Analyze this data and extract:
 
 Return JSON only with these fields: model, core_clock, memory_clock, vbios, subvendor, temp, authenticity_score, notes`;
 
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_URL}/models/gemini-1.0-pro:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
