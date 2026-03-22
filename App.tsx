@@ -3,6 +3,7 @@ import { UploadedImage, ImageType, AppStep, GPUAssessmentResult, ASSESSMENT_PROF
 import { analyzeGPU } from './services/geminiService';
 import { UploadZone } from './components/UploadZone';
 import { ResultsDashboard } from './components/ResultsDashboard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { GuideModal } from './components/GuideModal';
 import { Cpu, ChevronRight, Loader2, FileSearch, Settings, Info, FlaskConical, ArrowLeft, HelpCircle, AlertCircle } from 'lucide-react';
 
@@ -256,7 +257,9 @@ const App: React.FC = () => {
 
         {step === AppStep.RESULTS && (
           result ? (
-            <ResultsDashboard data={result} onReset={resetApp} onEdit={handleEdit} />
+            <ErrorBoundary fallback={<div className="text-white p-8">Error displaying results. Check console for details.</div>}>
+              <ResultsDashboard data={result} onReset={resetApp} onEdit={handleEdit} />
+            </ErrorBoundary>
           ) : (
             <div className="text-white p-8">
               <p>No result data available</p>

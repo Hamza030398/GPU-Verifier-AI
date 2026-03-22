@@ -10,7 +10,31 @@ interface ResultsDashboardProps {
 }
 
 export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onReset, onEdit }) => {
-  const { physical, performance, report, market_analysis, grounding_urls } = data;
+  // Defensive defaults to prevent crashes
+  const physical = data.physical || { 
+    overall_physical_rating: 0, 
+    sub_ratings: { cleanliness: 0, structural_integrity: 0, electrical_safety: 0 },
+    ai_feedback_comments: "No data available"
+  };
+  const performance = data.performance || { 
+    authenticity_status: "Unknown", 
+    performance_percentile: 0, 
+    thermal_health_score: 0,
+    validation_notes: "No validation data"
+  };
+  const report = data.report || { 
+    overall_score: 0, 
+    market_value_adjustment: 0, 
+    verdict: "Avoid" 
+  };
+  const market_analysis = data.market_analysis || { 
+    average_price: "N/A", 
+    price_range: "N/A", 
+    currency: "USD", 
+    model_identified: "Unknown" 
+  };
+  const grounding_urls = data.grounding_urls || [];
+  
   const [showDetails, setShowDetails] = useState(false);
 
   // Safeguard: Normalize thermal score if AI returns 0-100 instead of 0-10
