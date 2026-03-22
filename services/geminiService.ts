@@ -143,7 +143,7 @@ export const analyzeGPU = async (
       report: {
         overall_score: 0,
         market_value_adjustment: 0,
-        verdict: "Error"
+        verdict: "Avoid"
       },
       grounding_urls: urls
     };
