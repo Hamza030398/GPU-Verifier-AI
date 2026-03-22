@@ -1,48 +1,5 @@
 import { UploadedImage, GPUAssessmentResult, ImageType } from "../types";
-
-/**
- * Compress and resize image before converting to base64
- * Reduces token usage while maintaining quality for vision tasks
- */
-const compressAndConvert = async (file: File, maxWidth: number = 1024, quality: number = 0.85): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      reject(new Error("Canvas context not available"));
-      return;
-    }
-
-    img.onload = () => {
-      // Calculate new dimensions maintaining aspect ratio
-      let { width, height } = img;
-      
-      if (width > maxWidth || height > maxWidth) {
-        if (width > height) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        } else {
-          width = Math.round((width * maxWidth) / height);
-          height = maxWidth;
-        }
-      }
-
-      // Resize image
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Convert to compressed base64
-      const compressedBase64 = canvas.toDataURL("image/jpeg", quality).split(",")[1];
-      resolve(compressedBase64);
-    };
-
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = URL.createObjectURL(file);
-  });
-};
+import { extractTextFromAllImages, formatOCRForLLM } from "./ocrService";
 
 /**
  * Fetch market context from Tavily
@@ -89,17 +46,21 @@ export const analyzeGPU = async (
   // 1️⃣ Fetch market context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2️⃣ Compress and convert ALL images (parallel for speed)
-  const base64Images = await Promise.all(
-    images.map(img => compressAndConvert(img.file))
-  );
+  // 2️⃣ Extract text from all images using OCR.space
+  const ocrApiKey = import.meta.env.VITE_OCR_SPACE_API_KEY;
+  if (!ocrApiKey) {
+    throw new Error("OCR_SPACE_API_KEY not configured");
+  }
 
-  // 3️⃣ Send all images to Vercel serverless API
+  const ocrResults = await extractTextFromAllImages(images, ocrApiKey);
+  const ocrText = formatOCRForLLM(ocrResults);
+
+  // 3️⃣ Send OCR text to Vercel serverless API for LLM analysis
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      base64Images,
+      ocrText,
       gpuModel,
       summary,
       profileId

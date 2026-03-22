@@ -1,98 +1,85 @@
-// Use direct HF API fetch instead of InferenceClient due to provider issues
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
+// OCR.space + LLM Hybrid Approach
+// 1. OCR.space extracts text from images (free: 25k requests/month)
+// 2. Text sent to cheap LLM (Claude Haiku/GPT-3.5) for analysis
+// Much cheaper than vision models, no rate limits
+const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { base64Images, gpuModel, summary, profileId } = req.body;
+  const { ocrText, gpuModel, summary, profileId } = req.body;
 
-  if (!base64Images || !Array.isArray(base64Images) || base64Images.length === 0) {
-    return res.status(400).json({ error: "Image data missing" });
+  if (!ocrText || typeof ocrText !== "string" || ocrText.length === 0) {
+    return res.status(400).json({ error: "OCR text data missing" });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+    return res.status(500).json({ error: "CLAUDE_API_KEY not configured" });
   }
 
   try {
-    // Token-efficient prompt - minimal text, all images in one request
-    const content: any[] = [
-      { type: "text", text: `GPU: ${gpuModel}. Analyze these ${base64Images.length} GPU screenshots (GPU-Z/FurMark) and extract: model, core clock, memory clock, vbios, subvendor, temp, authenticity score 0-100, notes. Return JSON only.` }
-    ];
+    // Build prompt with OCR extracted text
+    const prompt = `GPU: ${gpuModel}
 
-    // Add all images to content array
-    for (const base64 of base64Images) {
-      content.push({
-        type: "image_url",
-        image_url: {
-          url: `data:image/png;base64,${base64}`
-        }
-      });
-    }
+Extracted text from ${ocrText.split("===").length - 1} GPU images:
+${ocrText}
 
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+Analyze this data and extract:
+- model: exact GPU model name
+- core_clock: MHz (from GPU-Z or FurMark)
+- memory_clock: MHz (from GPU-Z)
+- vbios: version string
+- subvendor: manufacturer (ASUS, MSI, etc.)
+- temp: max temperature from FurMark
+- authenticity_score: 0-100 based on spec consistency
+- notes: any anomalies or concerns
+
+Return JSON only with these fields: model, core_clock, memory_clock, vbios, subvendor, temp, authenticity_score, notes`;
+
+    const response = await fetch(CLAUDE_API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        contents: [{
-          parts: content.map(c => {
-            if (c.type === "text") return { text: c.text };
-            if (c.type === "image_url") {
-              const base64Data = c.image_url.url.replace("data:image/jpeg;base64,", "").replace("data:image/png;base64,", "");
-              return {
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Data
-                }
-              };
-            }
-            return {};
-          })
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 500
-        }
+        model: "claude-3-haiku-20240307",
+        max_tokens: 500,
+        temperature: 0.1,
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+      throw new Error(`Claude API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    // Gemini format returns candidates with content.parts
-    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    // Claude format returns content array with text
+    const result = data.content?.[0]?.text || "{}";
 
     res.status(200).json(result);
 
   } catch (e: any) {
-    console.error("Gemini error:", e);
+    console.error("Claude error:", e);
     
     const statusCode = e.response?.status || e.status;
     const errorMessage = e.message || "";
     
     if (statusCode === 429) {
       return res.status(429).json({
-        error: "Gemini rate limit exceeded."
+        error: "Claude rate limit exceeded."
       });
     }
     
-    if (statusCode === 400 && errorMessage.includes("API key")) {
+    if (statusCode === 401 || statusCode === 403) {
       return res.status(401).json({
-        error: "Invalid Gemini API key. Check GEMINI_API_KEY."
-      });
-    }
-    
-    if (statusCode === 403) {
-      return res.status(403).json({
-        error: "Gemini API access denied."
+        error: "Claude API authentication failed. Check CLAUDE_API_KEY."
       });
     }
     
