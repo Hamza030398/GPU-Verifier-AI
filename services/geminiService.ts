@@ -98,7 +98,14 @@ export const analyzeGPU = async (
     }
     
     // Remove markdown code blocks if present (```json ... ```))
-    textContent = textContent.replace(/```json\n?/gi, "").replace(/```\n?/g, "").trim();
+    // Handle multiple variations: ```json, ```JSON, ```, with or without newlines
+    textContent = textContent
+      .replace(/^```json\s*/i, "")  // Remove starting ```json
+      .replace(/^```\s*/i, "")      // Remove starting ```
+      .replace(/\s*```$/i, "")      // Remove ending ```
+      .replace(/```json\n?/gi, "")   // Inline removal
+      .replace(/```\n?/g, "")        // Any remaining ```
+      .trim();
     
     // Try to find JSON object in the text
     const match = textContent.match(/\{[\s\S]*\}/);
