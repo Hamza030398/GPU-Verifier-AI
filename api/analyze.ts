@@ -74,7 +74,7 @@ Use the extracted text to populate realistic values based on actual specs found.
         }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 500
+          maxOutputTokens: 2048
         }
       })
     });
