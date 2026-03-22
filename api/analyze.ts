@@ -1,8 +1,8 @@
-// OCR.space + LLM Hybrid Approach
+// OCR.space + Gemini Text API Hybrid Approach
 // 1. OCR.space extracts text from images (free: 25k requests/month)
-// 2. Text sent to cheap LLM (Claude Haiku/GPT-3.5) for analysis
-// Much cheaper than vision models, no rate limits
-const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
+// 2. Text sent to Gemini 1.5 Flash text model (free tier available)
+// Much cheaper than vision models, no rate limits for text
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -15,9 +15,9 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "OCR text data missing" });
   }
 
-  const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "CLAUDE_API_KEY not configured" });
+    return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
   }
 
   try {
@@ -39,47 +39,54 @@ Analyze this data and extract:
 
 Return JSON only with these fields: model, core_clock, memory_clock, vbios, subvendor, temp, authenticity_score, notes`;
 
-    const response = await fetch(CLAUDE_API_URL, {
+    const response = await fetch(`${GEMINI_API_URL}/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 500,
-        temperature: 0.1,
-        messages: [{ role: "user", content: prompt }]
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 500
+        }
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Claude API error ${response.status}: ${errorText}`);
+      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    // Claude format returns content array with text
-    const result = data.content?.[0]?.text || "{}";
+    // Gemini format returns candidates with content.parts
+    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
     res.status(200).json(result);
 
   } catch (e: any) {
-    console.error("Claude error:", e);
+    console.error("Gemini error:", e);
     
     const statusCode = e.response?.status || e.status;
     const errorMessage = e.message || "";
     
     if (statusCode === 429) {
       return res.status(429).json({
-        error: "Claude rate limit exceeded."
+        error: "Gemini rate limit exceeded. Free tier: 15 req/min, 1500/day."
       });
     }
     
-    if (statusCode === 401 || statusCode === 403) {
+    if (statusCode === 400 && errorMessage.includes("API key")) {
       return res.status(401).json({
-        error: "Claude API authentication failed. Check CLAUDE_API_KEY."
+        error: "Invalid Gemini API key. Check GEMINI_API_KEY."
+      });
+    }
+    
+    if (statusCode === 403) {
+      return res.status(403).json({
+        error: "Gemini API access denied. Enable Generative Language API in Google Cloud."
       });
     }
     
