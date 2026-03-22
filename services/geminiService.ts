@@ -83,6 +83,9 @@ export const analyzeGPU = async (
     // content is the text string from Gemini
     let textContent: string;
     
+    console.log("DEBUG: Type of content:", typeof content);
+    console.log("DEBUG: Content preview:", JSON.stringify(content).substring(0, 100));
+    
     if (typeof content === "string") {
       textContent = content;
     } else if (content && typeof content === "object") {
@@ -97,16 +100,21 @@ export const analyzeGPU = async (
       textContent = String(content);
     }
     
+    console.log("DEBUG: textContent before cleaning:", textContent.substring(0, 100));
+    
     // Remove markdown code blocks if present (```json ... ```))
     // Use global replacements to remove all markdown markers
     textContent = textContent
       .replace(/```json/gi, "")   // Remove all ```json
-      .replace(/```/g, "")        // Remove all remaining ```
-      .trim();
+      .replace(/```/g, "");        // Remove all remaining ```
+    
+    console.log("DEBUG: textContent after removing markdown:", textContent.substring(0, 100));
     
     // Extract JSON by finding the first { and last }
     const firstBrace = textContent.indexOf('{');
     const lastBrace = textContent.lastIndexOf('}');
+    
+    console.log("DEBUG: firstBrace:", firstBrace, "lastBrace:", lastBrace);
     
     let jsonStr: string;
     if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
@@ -120,9 +128,12 @@ export const analyzeGPU = async (
     // Clean up any remaining whitespace/newlines around braces
     jsonStr = jsonStr.trim();
     
+    console.log("DEBUG: Final jsonStr to parse:", jsonStr.substring(0, 100));
+    
     // Try parsing
     try {
       parsed = JSON.parse(jsonStr);
+      console.log("DEBUG: Successfully parsed JSON");
     } catch (parseError: any) {
       console.error("First parse attempt failed:", parseError.message);
       console.error("Attempted to parse:", jsonStr.substring(0, 100) + "...");
@@ -133,6 +144,7 @@ export const analyzeGPU = async (
       
       try {
         parsed = JSON.parse(jsonStr);
+        console.log("DEBUG: Successfully parsed JSON after fixing trailing commas");
       } catch (fixError) {
         throw parseError; // Throw original error if fix didn't work
       }
