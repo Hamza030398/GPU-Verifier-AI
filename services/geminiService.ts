@@ -98,31 +98,43 @@ export const analyzeGPU = async (
     }
     
     // Remove markdown code blocks if present (```json ... ```))
-    // Handle multiple variations: ```json, ```JSON, ```, with or without newlines
+    // Use global replacements to remove all markdown markers
     textContent = textContent
-      .replace(/^```json\s*/i, "")  // Remove starting ```json
-      .replace(/^```\s*/i, "")      // Remove starting ```
-      .replace(/\s*```$/i, "")      // Remove ending ```
-      .replace(/```json\n?/gi, "")   // Inline removal
-      .replace(/```\n?/g, "")        // Any remaining ```
+      .replace(/```json/gi, "")   // Remove all ```json
+      .replace(/```/g, "")        // Remove all remaining ```
       .trim();
     
-    // Try to find JSON object in the text
-    const match = textContent.match(/\{[\s\S]*\}/);
-    let jsonStr = match ? match[0] : textContent;
+    // Extract JSON by finding the first { and last }
+    const firstBrace = textContent.indexOf('{');
+    const lastBrace = textContent.lastIndexOf('}');
+    
+    let jsonStr: string;
+    if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+      jsonStr = textContent.substring(firstBrace, lastBrace + 1);
+    } else {
+      // Fallback to regex extraction
+      const match = textContent.match(/\{[\s\S]*\}/);
+      jsonStr = match ? match[0] : textContent;
+    }
+    
+    // Clean up any remaining whitespace/newlines around braces
+    jsonStr = jsonStr.trim();
     
     // Try parsing
     try {
       parsed = JSON.parse(jsonStr);
-    } catch (parseError) {
-      // If that fails, try to extract just the outermost braces
-      const firstBrace = textContent.indexOf('{');
-      const lastBrace = textContent.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-        jsonStr = textContent.substring(firstBrace, lastBrace + 1);
+    } catch (parseError: any) {
+      console.error("First parse attempt failed:", parseError.message);
+      console.error("Attempted to parse:", jsonStr.substring(0, 100) + "...");
+      
+      // Try to fix common JSON issues
+      // Remove any trailing commas before closing braces
+      jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+      
+      try {
         parsed = JSON.parse(jsonStr);
-      } else {
-        throw parseError;
+      } catch (fixError) {
+        throw parseError; // Throw original error if fix didn't work
       }
     }
 
