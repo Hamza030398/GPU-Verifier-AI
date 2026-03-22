@@ -75,18 +75,27 @@ export const analyzeGPU = async (
   const content = await response.json();
 
   /**
-   * More robust JSON parsing
+   * Parse Gemini text response into JSON
    */
   let parsed: GPUAssessmentResult;
 
   try {
-    const jsonStr = typeof content === "string"
-      ? content.match(/\{[\s\S]*\}/)?.[0]
-      : JSON.stringify(content);
+    // content is the text string from Gemini
+    let jsonStr: string;
+    
+    if (typeof content === "string") {
+      // Extract JSON object from text response
+      const match = content.match(/\{[\s\S]*\}/);
+      jsonStr = match ? match[0] : content;
+    } else {
+      // Already an object
+      jsonStr = JSON.stringify(content);
+    }
 
     parsed = JSON.parse(jsonStr || "{}");
 
-  } catch {
+  } catch (e) {
+    console.error("JSON parse error:", e, "Content:", content);
     throw new Error("Failed to parse AI response.");
   }
 

@@ -254,7 +254,15 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {step === AppStep.RESULTS && result && <ResultsDashboard data={result} onReset={resetApp} onEdit={handleEdit} />}
+        {step === AppStep.RESULTS && (
+          result ? (
+            <ResultsDashboard data={result} onReset={resetApp} onEdit={handleEdit} />
+          ) : (
+            <div className="text-white p-8">
+              <p>No result data available</p>
+            </div>
+          )
+        )}
       </main>
       <style>{`@keyframes loading { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }`}</style>
     </div>

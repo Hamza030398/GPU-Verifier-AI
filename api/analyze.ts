@@ -27,17 +27,41 @@ export default async function handler(req: any, res: any) {
 Extracted text from ${ocrText.split("===").length - 1} GPU images:
 ${ocrText}
 
-Analyze this data and extract:
-- model: exact GPU model name
-- core_clock: MHz (from GPU-Z or FurMark)
-- memory_clock: MHz (from GPU-Z)
-- vbios: version string
-- subvendor: manufacturer (ASUS, MSI, etc.)
-- temp: max temperature from FurMark
-- authenticity_score: 0-100 based on spec consistency
-- notes: any anomalies or concerns
+Analyze this data and return ONLY valid JSON in this exact structure:
 
-Return JSON only with these fields: model, core_clock, memory_clock, vbios, subvendor, temp, authenticity_score, notes`;
+{
+  "physical": {
+    "overall_physical_rating": 85,
+    "sub_ratings": {
+      "cleanliness": 80,
+      "structural_integrity": 90,
+      "electrical_safety": 85
+    },
+    "ai_feedback_comments": "Brief assessment of physical condition based on images"
+  },
+  "performance": {
+    "authenticity_status": "Verified",
+    "performance_percentile": 75,
+    "thermal_health_score": 82,
+    "validation_notes": "Key specs found: GPU model, core clock, memory clock, VBIOS, subvendor, max temp"
+  },
+  "market_analysis": {
+    "average_price": "$350",
+    "price_range": "$300-$400",
+    "currency": "USD",
+    "model_identified": "Exact GPU model name"
+  },
+  "report": {
+    "overall_score": 84,
+    "market_value_adjustment": 0,
+    "verdict": "Recommend Purchase"
+  }
+}
+
+Verdict options: "Recommend Purchase", "Negotiate", "Avoid"
+Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"
+
+Use the extracted text to populate realistic values based on actual specs found.`;
 
     const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
