@@ -186,11 +186,14 @@ const App: React.FC = () => {
             </div>
 
             <div className="mb-6 border-t border-slate-800 pt-6">
-              <h2 className="text-xl font-bold text-white mb-4">Physical Condition Photos</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Physical Condition Photos <span className="text-sm font-normal text-slate-400">(Required: Front & Backplate)</span></h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[ImageType.FRONT_SHROUD, ImageType.BACKPLATE, ImageType.IO_SHIELD, ImageType.PCIE_LANES, ImageType.POWER_CONNECTOR, ImageType.HEATSINK].map(type => (
-                  <UploadZone key={type} type={type} uploadedImage={getImage(type)} onUpload={handleUpload} onRemove={handleRemove} required />
-                ))}
+                <UploadZone type={ImageType.FRONT_SHROUD} uploadedImage={getImage(ImageType.FRONT_SHROUD)} onUpload={handleUpload} onRemove={handleRemove} required />
+                <UploadZone type={ImageType.BACKPLATE} uploadedImage={getImage(ImageType.BACKPLATE)} onUpload={handleUpload} onRemove={handleRemove} required />
+                <UploadZone type={ImageType.IO_SHIELD} uploadedImage={getImage(ImageType.IO_SHIELD)} onUpload={handleUpload} onRemove={handleRemove} />
+                <UploadZone type={ImageType.PCIE_LANES} uploadedImage={getImage(ImageType.PCIE_LANES)} onUpload={handleUpload} onRemove={handleRemove} />
+                <UploadZone type={ImageType.POWER_CONNECTOR} uploadedImage={getImage(ImageType.POWER_CONNECTOR)} onUpload={handleUpload} onRemove={handleRemove} />
+                <UploadZone type={ImageType.HEATSINK} uploadedImage={getImage(ImageType.HEATSINK)} onUpload={handleUpload} onRemove={handleRemove} />
               </div>
             </div>
 
@@ -213,9 +216,8 @@ const App: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-4xl">
-              {[ImageType.FURMARK, ImageType.GPUZ].map(type => (
-                <UploadZone key={type} type={type} uploadedImage={getImage(type)} onUpload={handleUpload} onRemove={handleRemove} required />
-              ))}
+              <UploadZone type={ImageType.FURMARK} uploadedImage={getImage(ImageType.FURMARK)} onUpload={handleUpload} onRemove={handleRemove} required />
+              <UploadZone type={ImageType.GPUZ} uploadedImage={getImage(ImageType.GPUZ)} onUpload={handleUpload} onRemove={handleRemove} required />
             </div>
 
             <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800 mb-8 max-w-4xl">
@@ -232,7 +234,7 @@ const App: React.FC = () => {
                <button onClick={() => setStep(AppStep.UPLOAD_PHYSICAL)} className="px-6 py-3 bg-slate-800 text-slate-300 rounded-lg font-semibold border border-slate-700">
                  Back
                </button>
-               <button onClick={startAnalysis} disabled={images.length === 0} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-semibold shadow-lg">
+               <button onClick={startAnalysis} disabled={images.length < 4} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-semibold shadow-lg">
                  Run AI Verification
                </button>
             </div>

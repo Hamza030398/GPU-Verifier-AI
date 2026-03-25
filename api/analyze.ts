@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
     }));
 
     // Build prompt for visual analysis
-    const promptText = `Analyze these ${base64Images.length} GPU images for physical condition and authenticity.
+    const promptText = `Analyze these GPU images (minimum 4 required: Front Shroud, Backplate, FurMark, GPU-Z) for physical condition and authenticity.
 
 GPU Model: ${gpuModel}
 Market Context: ${summary}
@@ -76,7 +76,7 @@ Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"
 
 Base ratings on visual inspection: dirty/dusty (-10-20%), visible damage (-20-40%), corrosion (-30-50%), counterfeit signs (Avoid).`;
 
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_URL}/models/gemini-3-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

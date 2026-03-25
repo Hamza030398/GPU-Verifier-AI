@@ -80,9 +80,10 @@ export const analyzeGPU = async (
   // 1️⃣ Fetch market context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2️⃣ Convert images to compressed base64
+  // 2️⃣ Convert images to compressed base64 (600px, 70% quality for TPM optimization)
+  // 6 images at 600px/0.7 ≈ 120-150K tokens each = ~720K-900K total (within 200K-300K TPM)
   const base64Images = await Promise.all(
-    images.map(img => fileToBase64(img.file, 800, 0.8))
+    images.map(img => fileToBase64(img.file, 600, 0.7))
   );
 
   // 3️⃣ Send images to Vercel serverless API for vision analysis
