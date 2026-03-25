@@ -1,4 +1,5 @@
 import { UploadedImage, GPUAssessmentResult } from "../types";
+import { generateMockAssessment } from "./mockDataService";
 
 /**
  * Convert image file to compressed base64 for API
@@ -70,11 +71,23 @@ async function getMarketData(gpuModel: string) {
 export const analyzeGPU = async (
   images: UploadedImage[],
   gpuModel: string,
-  profileId: string
+  profileId: string,
+  mockMode: boolean = false
 ): Promise<GPUAssessmentResult> => {
 
   if (!images.length) {
     throw new Error("No images provided.");
+  }
+
+  // MOCK MODE: Return mock data without API call (saves RPD/RPM)
+  if (mockMode) {
+    console.log("[MOCK MODE] Using mock data - no API call made");
+    const { urls } = await getMarketData(gpuModel);
+    const mockResult = generateMockAssessment(gpuModel);
+    mockResult.grounding_urls = urls;
+    // Simulate network delay for realistic testing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    return mockResult;
   }
 
   // 1️⃣ Fetch market context
@@ -149,7 +162,7 @@ export const analyzeGPU = async (
       throw new Error("No valid JSON object found in response");
     }
     
-    const jsonStr = textContent.substring(startIdx, endIdx + 1);
+    let jsonStr = textContent.substring(startIdx, endIdx + 1);
     
     console.log("DEBUG: Extracted JSON:", jsonStr.substring(0, 100));
     console.log("DEBUG: JSON length:", jsonStr.length);

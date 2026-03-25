@@ -18,6 +18,7 @@ const App: React.FC = () => {
 
   const [gpuModel, setGpuModel] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState(ASSESSMENT_PROFILES[0].id);
+  const [useMockMode, setUseMockMode] = useState(false); // Mock mode to save RPD/RPM
 
   const handleUpload = (type: ImageType, file: File) => {
     const newImage: UploadedImage = {
@@ -33,7 +34,7 @@ const App: React.FC = () => {
     setImages(prev => prev.filter(img => img.id !== id));
   };
 
-  const startAnalysis = async () => {
+  const startAnalysis = async (useMockMode: boolean = false) => {
     if (!gpuModel.trim()) {
       setError("Please specify the full GPU name (Vendor + Model).");
       setStep(AppStep.UPLOAD_PHYSICAL);
@@ -47,7 +48,7 @@ const App: React.FC = () => {
 
     try {
       console.log("Starting analysis with", images.length, "images");
-      const result = await analyzeGPU(images, gpuModel, selectedProfileId);
+      const result = await analyzeGPU(images, gpuModel, selectedProfileId, useMockMode);
       console.log("Analysis result:", result);
       setResult(result);
       setStep(AppStep.RESULTS);
