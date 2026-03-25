@@ -229,14 +229,25 @@ const App: React.FC = () => {
                  <div className="text-slate-400">Target: <span className="text-white ml-2">{gpuModel}</span></div>
                  <div className="text-slate-400">Files: <span className="text-white ml-2">{images.length}</span></div>
               </div>
+              <div className="mt-4 pt-4 border-t border-slate-700">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={useMockMode} 
+                    onChange={(e) => setUseMockMode(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  />
+                  <span className="text-sm text-slate-300">Mock Mode (Save RPD/RPM - uses fake data)</span>
+                </label>
+              </div>
             </div>
 
             <div className="flex items-center justify-between max-w-4xl">
                <button onClick={() => setStep(AppStep.UPLOAD_PHYSICAL)} className="px-6 py-3 bg-slate-800 text-slate-300 rounded-lg font-semibold border border-slate-700">
                  Back
                </button>
-               <button onClick={startAnalysis} disabled={images.length < 4} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-semibold shadow-lg">
-                 Run AI Verification
+               <button onClick={() => startAnalysis(useMockMode)} disabled={images.length < 4} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-semibold shadow-lg">
+                 {useMockMode ? "Run Mock Test" : "Run AI Verification"}
                </button>
             </div>
           </div>
