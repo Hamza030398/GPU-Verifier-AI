@@ -82,6 +82,30 @@ Return ONLY valid JSON in this exact structure:
           "observed": "6GB GDDR6 (Micron)",
           "reference": "6GB GDDR6",
           "status": "MATCH"
+        },
+        {
+          "spec_name": "Bus Width",
+          "observed": "192-bit",
+          "reference": "192-bit",
+          "status": "MATCH"
+        },
+        {
+          "spec_name": "Shaders/CUDA Cores",
+          "observed": "1920",
+          "reference": "1920",
+          "status": "MATCH"
+        },
+        {
+          "spec_name": "VBIOS Version",
+          "observed": "90.06.2E.40.65",
+          "reference": "Official MSI Ventus",
+          "status": "MATCH"
+        },
+        {
+          "spec_name": "Subvendor ID",
+          "observed": "MSI (1462)",
+          "reference": "Matches Brand (MSI)",
+          "status": "MATCH"
         }
       ],
       "overall_match": true
