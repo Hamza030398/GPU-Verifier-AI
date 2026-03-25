@@ -169,6 +169,22 @@ export const analyzeGPU = async (
     // If response appears truncated (no closing brace), add missing closing braces
     if (endIdx === -1 || endIdx < startIdx) {
       console.log("DEBUG: Response appears truncated, attempting to fix...");
+      
+      // First, check if we're in the middle of a string (odd number of unescaped quotes)
+      const quoteMatches = jsonStr.match(/(?<!\\)"/g);
+      const quoteCount = quoteMatches ? quoteMatches.length : 0;
+      
+      // If odd number of quotes, we're in an unclosed string - close it
+      if (quoteCount % 2 !== 0) {
+        jsonStr += '"'; // Close the open string
+        console.log("DEBUG: Closed unclosed string");
+      }
+      
+      // Close any incomplete property values with null
+      // Match patterns like "key": "val or "key": 
+      jsonStr = jsonStr.replace(/"([^"]+)":\s*"?[^"]*$/, '"$1": "[truncated]"');
+      jsonStr = jsonStr.replace(/"([^"]+)":\s*$/, '"$1": null');
+      
       // Count opening braces and add closing ones
       const openBraces = (jsonStr.match(/\{/g) || []).length;
       const closeBraces = (jsonStr.match(/\}/g) || []).length;
