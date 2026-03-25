@@ -137,7 +137,8 @@ export const analyzeGPU = async (
     // Use global replacements to remove all markdown markers
     textContent = textContent
       .replace(/```json/gi, "")   // Remove all ```json
-      .replace(/```/g, "");        // Remove all remaining ```
+      .replace(/```/g, "")        // Remove all remaining ```
+      .trim();                     // Clean up whitespace
     
     console.log("DEBUG: textContent after removing markdown:", textContent.substring(0, 100));
     
