@@ -1,5 +1,39 @@
-import { UploadedImage, GPUAssessmentResult, ImageType } from "../types";
-import { extractTextFromAllImages, formatOCRForLLM } from "./ocrService";
+import { UploadedImage, GPUAssessmentResult } from "../types";
+
+/**
+ * Convert image file to compressed base64 for API
+ */
+async function fileToBase64(file: File, maxWidth = 800, quality = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Get base64 without data URL prefix
+        const base64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
+        resolve(base64);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
 
 /**
  * Fetch market context from Tavily
@@ -46,21 +80,17 @@ export const analyzeGPU = async (
   // 1️⃣ Fetch market context
   const { summary, urls } = await getMarketData(gpuModel);
 
-  // 2️⃣ Extract text from all images using OCR.space
-  const ocrApiKey = import.meta.env.VITE_OCR_SPACE_API_KEY;
-  if (!ocrApiKey) {
-    throw new Error("OCR_SPACE_API_KEY not configured");
-  }
+  // 2️⃣ Convert images to compressed base64
+  const base64Images = await Promise.all(
+    images.map(img => fileToBase64(img.file, 800, 0.8))
+  );
 
-  const ocrResults = await extractTextFromAllImages(images, ocrApiKey);
-  const ocrText = formatOCRForLLM(ocrResults);
-
-  // 3️⃣ Send OCR text to Vercel serverless API for LLM analysis
+  // 3️⃣ Send images to Vercel serverless API for vision analysis
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ocrText,
+      base64Images,
       gpuModel,
       summary,
       profileId

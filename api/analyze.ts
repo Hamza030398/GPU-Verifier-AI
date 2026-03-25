@@ -1,7 +1,5 @@
-// OCR.space + Gemini Text API Hybrid Approach
-// 1. OCR.space extracts text from images (free: 25k requests/month)
-// 2. Text sent to Gemini 1.5 Flash text model (free tier available)
-// Much cheaper than vision models, no rate limits for text
+// Gemini 2.0 Flash Vision API
+// Direct image analysis for GPU physical condition assessment
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 export default async function handler(req: any, res: any) {
@@ -9,10 +7,10 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { ocrText, gpuModel, summary, profileId } = req.body;
+  const { base64Images, gpuModel, summary, profileId } = req.body;
 
-  if (!ocrText || typeof ocrText !== "string" || ocrText.length === 0) {
-    return res.status(400).json({ error: "OCR text data missing" });
+  if (!base64Images || !Array.isArray(base64Images) || base64Images.length === 0) {
+    return res.status(400).json({ error: "Image data missing" });
   }
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
@@ -21,13 +19,28 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Build prompt with OCR extracted text
-    const prompt = `GPU: ${gpuModel}
+    // Build content parts with images
+    const imageParts = base64Images.map((base64: string) => ({
+      inlineData: {
+        mimeType: "image/jpeg",
+        data: base64
+      }
+    }));
 
-Extracted text from ${ocrText.split("===").length - 1} GPU images:
-${ocrText}
+    // Build prompt for visual analysis
+    const promptText = `Analyze these ${base64Images.length} GPU images for physical condition and authenticity.
 
-Analyze this data and return ONLY valid JSON in this exact structure:
+GPU Model: ${gpuModel}
+Market Context: ${summary}
+
+Provide a detailed assessment focusing on:
+1. Physical condition - scratches, dust, damage, corrosion, overall cleanliness
+2. Structural integrity - PCB condition, component alignment, solder quality
+3. Authenticity - signs of counterfeit, refurbishment, or tampering
+4. Connector condition - PCIe pins, power connectors, display outputs
+5. Thermal solution - heatsink/fan condition
+
+Return ONLY valid JSON in this exact structure:
 
 {
   "physical": {
@@ -37,19 +50,19 @@ Analyze this data and return ONLY valid JSON in this exact structure:
       "structural_integrity": 90,
       "electrical_safety": 85
     },
-    "ai_feedback_comments": "Brief assessment of physical condition based on images"
+    "ai_feedback_comments": "Detailed visual assessment of physical condition from images"
   },
   "performance": {
     "authenticity_status": "Verified",
     "performance_percentile": 75,
     "thermal_health_score": 82,
-    "validation_notes": "Key specs found: GPU model, core clock, memory clock, VBIOS, subvendor, max temp"
+    "validation_notes": "Visual verification: authentic GPU appearance, proper component placement, no signs of repair"
   },
   "market_analysis": {
     "average_price": "$350",
     "price_range": "$300-$400",
     "currency": "USD",
-    "model_identified": "Exact GPU model name"
+    "model_identified": "Exact GPU model name from visual inspection"
   },
   "report": {
     "overall_score": 84,
@@ -61,16 +74,19 @@ Analyze this data and return ONLY valid JSON in this exact structure:
 Verdict options: "Recommend Purchase", "Negotiate", "Avoid"
 Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"
 
-Use the extracted text to populate realistic values based on actual specs found.`;
+Base ratings on visual inspection: dirty/dusty (-10-20%), visible damage (-20-40%), corrosion (-30-50%), counterfeit signs (Avoid).`;
 
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_URL}/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: prompt }]
+          parts: [
+            { text: promptText },
+            ...imageParts
+          ]
         }],
         generationConfig: {
           temperature: 0.1,
