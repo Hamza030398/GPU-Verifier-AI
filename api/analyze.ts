@@ -76,7 +76,7 @@ Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"
 
 Base ratings on visual inspection: dirty/dusty (-10-20%), visible damage (-20-40%), corrosion (-30-50%), counterfeit signs (Avoid).`;
 
-    const response = await fetch(`${GEMINI_API_URL}/models/gemini-3-flash-preview-04-09:generateContent?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_URL}/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
