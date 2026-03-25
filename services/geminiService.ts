@@ -133,39 +133,26 @@ export const analyzeGPU = async (
     
     console.log("DEBUG: textContent before cleaning:", textContent.substring(0, 100));
     
-    // Remove markdown code blocks if present (```json ... ```))
-    // Use global replacements to remove all markdown markers
+    // Remove markdown code blocks and whitespace
     textContent = textContent
-      .replace(/```json/gi, "")   // Remove all ```json
-      .replace(/```/g, "")        // Remove all remaining ```
-      .trim();                     // Clean up whitespace
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
     
-    console.log("DEBUG: textContent after removing markdown:", textContent.substring(0, 100));
+    console.log("DEBUG: Cleaned text:", textContent.substring(0, 100));
     
-    // More robust: extract JSON object using regex that handles nested braces
-    const jsonMatch = textContent.match(/\{[\s\S]*?\}(?=\s*$)/);
-    let jsonStr: string;
+    // Find first { and last } - simple extraction
+    const startIdx = textContent.indexOf('{');
+    const endIdx = textContent.lastIndexOf('}');
     
-    if (jsonMatch) {
-      jsonStr = jsonMatch[0];
-    } else {
-      // Fallback to brace finding
-      const firstBrace = textContent.indexOf('{');
-      const lastBrace = textContent.lastIndexOf('}');
-      
-      console.log("DEBUG: firstBrace:", firstBrace, "lastBrace:", lastBrace);
-      
-      if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-        jsonStr = textContent.substring(firstBrace, lastBrace + 1);
-      } else {
-        jsonStr = textContent;
-      }
+    if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
+      throw new Error("No valid JSON object found in response");
     }
     
-    // Clean up any remaining whitespace/newlines around braces
-    jsonStr = jsonStr.trim();
+    const jsonStr = textContent.substring(startIdx, endIdx + 1);
     
-    console.log("DEBUG: Final jsonStr to parse:", jsonStr.substring(0, 100));
+    console.log("DEBUG: Extracted JSON:", jsonStr.substring(0, 100));
+    console.log("DEBUG: JSON length:", jsonStr.length);
     
     // Try parsing
     try {
