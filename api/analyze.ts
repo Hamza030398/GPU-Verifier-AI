@@ -90,7 +90,7 @@ Base ratings on visual inspection: dirty/dusty (-10-20%), visible damage (-20-40
         }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 2048
+          maxOutputTokens: 4096
         }
       })
     });

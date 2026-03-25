@@ -150,21 +150,42 @@ export const analyzeGPU = async (
     textContent = textContent
       .replace(/```json/gi, "")
       .replace(/```/g, "")
+      .replace(/\\n/g, "\n")  // Unescape newlines
+      .replace(/\\"/g, '"')   // Unescape quotes
       .trim();
     
-    console.log("DEBUG: Cleaned text:", textContent.substring(0, 100));
+    console.log("DEBUG: Cleaned text:", textContent.substring(0, 200));
     
     // Find first { and last } - simple extraction
     const startIdx = textContent.indexOf('{');
     const endIdx = textContent.lastIndexOf('}');
     
-    if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
-      throw new Error("No valid JSON object found in response");
+    if (startIdx === -1) {
+      throw new Error("No JSON object found in response");
     }
     
-    let jsonStr = textContent.substring(startIdx, endIdx + 1);
+    let jsonStr = textContent.substring(startIdx);
     
-    console.log("DEBUG: Extracted JSON:", jsonStr.substring(0, 100));
+    // If response appears truncated (no closing brace), add missing closing braces
+    if (endIdx === -1 || endIdx < startIdx) {
+      console.log("DEBUG: Response appears truncated, attempting to fix...");
+      // Count opening braces and add closing ones
+      const openBraces = (jsonStr.match(/\{/g) || []).length;
+      const closeBraces = (jsonStr.match(/\}/g) || []).length;
+      const missingBraces = openBraces - closeBraces;
+      
+      if (missingBraces > 0) {
+        jsonStr = jsonStr + '}'.repeat(missingBraces);
+        console.log("DEBUG: Added", missingBraces, "closing braces");
+      }
+    } else {
+      jsonStr = textContent.substring(startIdx, endIdx + 1);
+    }
+    
+    // Remove any trailing commas before closing braces/brackets (common LLM error)
+    jsonStr = jsonStr.replace(/,\s*\}/g, "}").replace(/,\s*\]/g, "]");
+    
+    console.log("DEBUG: Extracted JSON:", jsonStr.substring(0, 200));
     console.log("DEBUG: JSON length:", jsonStr.length);
     
     // Try parsing
