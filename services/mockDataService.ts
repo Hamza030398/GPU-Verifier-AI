@@ -21,7 +21,30 @@ export function generateMockAssessment(gpuModel: string): GPUAssessmentResult {
       authenticity_status: "Verified",
       performance_percentile: 78,
       thermal_health_score: 85,
-      validation_notes: `GPU-Z validation: ${modelName} confirmed authentic. Boost clock matches reference specs. Memory clock stable. BIOS version authentic (not modified). Subvendor matches physical card branding. FurMark stress test passed - max temp 72°C within normal range.`
+      validation_notes: `GPU-Z validation: ${modelName} confirmed authentic. Boost clock matches reference specs. Memory clock stable. BIOS version authentic (not modified). Subvendor matches physical card branding. FurMark stress test passed - max temp 72°C within normal range.`,
+      telemetry: {
+        gpuz_detected: {
+          base_clock: "1365 MHz",
+          boost_clock: "1680 MHz",
+          vram_amount: "8GB",
+          vram_type: "GDDR6X",
+          vram_manufacturer: "Micron",
+          bus_width: "256-bit",
+          shaders_cuda_cores: "8704",
+          vbios_version: "94.02.71.00.8D",
+          subvendor: "NVIDIA",
+          subvendor_id: "10DE"
+        },
+        comparisons: [
+          { spec_name: "Base/Boost Clock", observed: "1365 / 1680 MHz", reference: "1365 / 1680 MHz", status: "MATCH" },
+          { spec_name: "VRAM Type & Amount", observed: "8GB GDDR6X (Micron)", reference: "8GB GDDR6X", status: "MATCH" },
+          { spec_name: "Bus Width", observed: "256-bit", reference: "256-bit", status: "MATCH" },
+          { spec_name: "CUDA Cores", observed: "8704", reference: "8704", status: "MATCH" },
+          { spec_name: "VBIOS Version", observed: "94.02.71.00.8D", reference: "NVIDIA Reference", status: "MATCH" },
+          { spec_name: "Subvendor ID", observed: "NVIDIA (10DE)", reference: "Matches Brand", status: "MATCH" }
+        ],
+        overall_match: true
+      }
     },
     market_analysis: {
       average_price: "$450",

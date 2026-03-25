@@ -84,6 +84,15 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
     content += `Thermal Health Score: ${normalizedThermalScore}/10\n\n`;
     content += `Validation Notes:\n${performance.validation_notes}\n\n`;
 
+    if (performance.telemetry) {
+      content += `DETAILED TELEMETRY (GPU-Z Spec Comparison)\n`;
+      content += `---------------------------------------------\n`;
+      performance.telemetry.comparisons.forEach(c => {
+        content += `- ${c.spec_name.padEnd(25)}: ${c.observed.padEnd(20)} (Ref: ${c.reference}) [${c.status}]\n`;
+      });
+      content += `\nOverall: ${performance.telemetry.overall_match ? 'ALL SPECS MATCH' : 'MISMATCH DETECTED'}\n\n`;
+    }
+
     if (performance.detailed_metrics && performance.detailed_metrics.length > 0) {
       content += `DETAILED TELEMETRY (Vision Analysis)\n`;
       content += `---------------------------------------------\n`;
@@ -276,7 +285,63 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
             <p className="text-sm text-slate-300 leading-relaxed">{performance.validation_notes}</p>
           </div>
 
-          {performance.detailed_metrics && (
+          {/* Detailed Telemetry Section */}
+          {performance.telemetry && (
+            <div className="bg-slate-950 rounded-xl border border-slate-800 mb-4 overflow-hidden">
+              <div 
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-900/50 transition-colors"
+                onClick={() => setShowDetails(!showDetails)}
+              >
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-blue-400" />
+                  <h4 className="text-sm font-semibold text-slate-300">Detailed Telemetry</h4>
+                  {performance.telemetry.overall_match ? (
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">ALL MATCH</span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full border border-amber-500/30">MISMATCH</span>
+                  )}
+                </div>
+                {showDetails ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+              </div>
+              
+              {showDetails && (
+                <div className="border-t border-slate-800">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-800 bg-slate-900/50">
+                          <th className="py-2 px-4 text-slate-400 font-medium text-xs">Spec</th>
+                          <th className="py-2 px-4 text-slate-400 font-medium text-xs">GPU-Z Detected</th>
+                          <th className="py-2 px-4 text-slate-400 font-medium text-xs">Reference</th>
+                          <th className="py-2 px-4 text-slate-400 font-medium text-xs text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {performance.telemetry.comparisons.map((comp, idx) => (
+                          <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                            <td className="py-2 px-4 text-slate-300 font-medium">{comp.spec_name}</td>
+                            <td className="py-2 px-4 text-slate-200 font-mono">{comp.observed}</td>
+                            <td className="py-2 px-4 text-slate-400 font-mono">{comp.reference}</td>
+                            <td className="py-2 px-4 text-right">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                comp.status === "MATCH" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+                                comp.status === "MISMATCH" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" :
+                                "bg-slate-500/20 text-slate-400 border border-slate-500/30"
+                              }`}>
+                                {comp.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {performance.detailed_metrics && !performance.telemetry && (
             <button 
               onClick={() => setShowDetails(!showDetails)}
               className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-700"

@@ -56,7 +56,36 @@ Return ONLY valid JSON in this exact structure:
     "authenticity_status": "Verified",
     "performance_percentile": 75,
     "thermal_health_score": 82,
-    "validation_notes": "Visual verification: authentic GPU appearance, proper component placement, no signs of repair"
+    "validation_notes": "Visual verification: authentic GPU appearance, proper component placement, no signs of repair",
+    "telemetry": {
+      "gpuz_detected": {
+        "base_clock": "1365 MHz",
+        "boost_clock": "1680 MHz",
+        "vram_amount": "6GB",
+        "vram_type": "GDDR6",
+        "vram_manufacturer": "Micron",
+        "bus_width": "192-bit",
+        "shaders_cuda_cores": "1920",
+        "vbios_version": "90.06.2E.40.65",
+        "subvendor": "MSI",
+        "subvendor_id": "1462"
+      },
+      "comparisons": [
+        {
+          "spec_name": "Base/Boost Clock",
+          "observed": "1460 / 1925 MHz",
+          "reference": "1365 / 1680 MHz",
+          "status": "MATCH"
+        },
+        {
+          "spec_name": "VRAM Type & Amount",
+          "observed": "6GB GDDR6 (Micron)",
+          "reference": "6GB GDDR6",
+          "status": "MATCH"
+        }
+      ],
+      "overall_match": true
+    }
   },
   "market_analysis": {
     "average_price": "$350",
@@ -71,10 +100,17 @@ Return ONLY valid JSON in this exact structure:
   }
 }
 
-Verdict options: "Recommend Purchase", "Negotiate", "Avoid"
-Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"
+From the GPU-Z image, extract these exact fields:
+- Base/Boost Clock (from "GPU Clock" field)
+- VRAM Amount & Type (from "Memory Type" and "Memory Size")
+- Bus Width (from "Memory Bus Width")
+- Shaders/CUDA Cores (from "Shaders" or "CUDA Cores" field)
+- VBIOS Version (from "BIOS Version")
+- Subvendor (from "Subvendor" or "Card Manufacturer")
 
-Base ratings on visual inspection: dirty/dusty (-10-20%), visible damage (-20-40%), corrosion (-30-50%), counterfeit signs (Avoid).`;
+Status options: "MATCH", "MISMATCH", "UNKNOWN"
+Verdict options: "Recommend Purchase", "Negotiate", "Avoid"
+Authenticity options: "Verified", "Mismatch", "Fake", "Unknown"`;
 
     const response = await fetch(`${GEMINI_API_URL}/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
       method: "POST",

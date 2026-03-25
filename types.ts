@@ -63,12 +63,39 @@ export interface DetailedMetric {
   status: "Match" | "Deviation" | "Critical";
 }
 
+export interface TelemetrySpec {
+  base_clock: string;
+  boost_clock: string;
+  vram_amount: string;
+  vram_type: string;
+  vram_manufacturer?: string;
+  bus_width: string;
+  shaders_cuda_cores: string;
+  vbios_version: string;
+  subvendor: string;
+  subvendor_id?: string;
+}
+
+export interface TelemetryComparison {
+  spec_name: string;
+  observed: string;
+  reference: string;
+  status: "MATCH" | "MISMATCH" | "UNKNOWN";
+}
+
+export interface DetailedTelemetry {
+  gpuz_detected: TelemetrySpec;
+  comparisons: TelemetryComparison[];
+  overall_match: boolean;
+}
+
 export interface PerformanceAnalysis {
   authenticity_status: "Verified" | "Mismatch" | "Fake" | "Unknown";
   performance_percentile: number;
   thermal_health_score: number;
   validation_notes: string;
   detailed_metrics?: DetailedMetric[];
+  telemetry?: DetailedTelemetry;
 }
 
 export interface MarketData {
