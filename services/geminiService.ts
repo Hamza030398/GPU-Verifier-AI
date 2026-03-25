@@ -142,19 +142,24 @@ export const analyzeGPU = async (
     
     console.log("DEBUG: textContent after removing markdown:", textContent.substring(0, 100));
     
-    // Extract JSON by finding the first { and last }
-    const firstBrace = textContent.indexOf('{');
-    const lastBrace = textContent.lastIndexOf('}');
-    
-    console.log("DEBUG: firstBrace:", firstBrace, "lastBrace:", lastBrace);
-    
+    // More robust: extract JSON object using regex that handles nested braces
+    const jsonMatch = textContent.match(/\{[\s\S]*?\}(?=\s*$)/);
     let jsonStr: string;
-    if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-      jsonStr = textContent.substring(firstBrace, lastBrace + 1);
+    
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
     } else {
-      // Fallback to regex extraction
-      const match = textContent.match(/\{[\s\S]*\}/);
-      jsonStr = match ? match[0] : textContent;
+      // Fallback to brace finding
+      const firstBrace = textContent.indexOf('{');
+      const lastBrace = textContent.lastIndexOf('}');
+      
+      console.log("DEBUG: firstBrace:", firstBrace, "lastBrace:", lastBrace);
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+        jsonStr = textContent.substring(firstBrace, lastBrace + 1);
+      } else {
+        jsonStr = textContent;
+      }
     }
     
     // Clean up any remaining whitespace/newlines around braces
