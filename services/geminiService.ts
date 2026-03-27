@@ -230,7 +230,7 @@ export const analyzeGPU = async (
     parsed = {
       physical: {
         overall_physical_rating: 0,
-        sub_ratings: { cleanliness: 0, structural_integrity: 0, electrical_safety: 0 },
+        sub_ratings: { thermal_solution: 0, pcb_integrity: 0, component_quality: 0 },
         ai_feedback_comments: "Error: Could not parse AI response. Raw response: " + JSON.stringify(content).slice(0, 200)
       },
       performance: {
