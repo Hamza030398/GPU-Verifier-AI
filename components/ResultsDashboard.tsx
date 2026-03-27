@@ -5,11 +5,12 @@ import { AlertTriangle, CheckCircle, XCircle, Thermometer, Zap, Shield, Activity
 
 interface ResultsDashboardProps {
   data: GPUAssessmentResult;
+  gpuModel: string;
   onReset: () => void;
   onEdit: () => void;
 }
 
-export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onReset, onEdit }) => {
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, gpuModel, onReset, onEdit }) => {
   // Defensive defaults to prevent crashes
   const physical = data.physical || { 
     overall_physical_rating: 0, 
@@ -152,7 +153,11 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       
-      {/* Header / Verdict */}
+      {/* Header / GPU Model & Verdict */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white mb-1">{gpuModel}</h1>
+        <p className="text-slate-400 text-sm">GPU Verification Report</p>
+      </div>
       <div className={`p-6 rounded-2xl border ${getVerdictColor(report.verdict)} flex flex-col lg:flex-row items-center justify-between gap-6`}>
         <div className="text-center lg:text-left">
           <h2 className="text-3xl font-bold mb-2">Verdict: {report.verdict}</h2>

@@ -272,7 +272,7 @@ const App: React.FC = () => {
         {step === AppStep.RESULTS && (
           result ? (
             <ErrorBoundary fallback={<div className="text-white p-8">Error displaying results. Check console for details.</div>}>
-              <ResultsDashboard data={result} onReset={resetApp} onEdit={handleEdit} />
+              <ResultsDashboard data={result} gpuModel={gpuModel} onReset={resetApp} onEdit={handleEdit} />
             </ErrorBoundary>
           ) : (
             <div className="text-white p-8">
