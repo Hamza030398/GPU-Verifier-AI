@@ -164,23 +164,40 @@ export const analyzeGPU = async (
       throw new Error("No JSON object found in response");
     }
     
-    let jsonStr = textContent.substring(startIdx);
+    let jsonStr: string;
     
-    // If response appears truncated (no closing brace), add missing closing braces
-    if (endIdx === -1 || endIdx < startIdx) {
+    // Check if response appears truncated by looking for incomplete content
+    // A complete response should end with "}\n" or just "}" after the last property
+    const lastFewChars = textContent.slice(-20);
+    const appearsTruncated = !textContent.trim().endsWith('}') || 
+                             /"[a-z_]*$/.test(textContent) || // Ends mid-key like "ai_fe
+                             /:\s*"[^"]*$/.test(textContent) || // Ends mid-string value
+                             /:\s*$/.test(textContent); // Ends after colon with no value
+    
+    if (appearsTruncated || endIdx === -1 || endIdx < startIdx) {
       console.log("DEBUG: Response appears truncated, attempting to fix...");
       
-      // First, check if we're in the middle of a string (odd number of unescaped quotes)
+      jsonStr = textContent.substring(startIdx);
+      
+      // First, check if we're in the middle of a key name (no quote after opening)
+      if (/"[a-z_]*$/.test(jsonStr)) {
+        // Remove partial key and complete the parent object
+        jsonStr = jsonStr.replace(/"[a-z_]*$/, '');
+        // Remove trailing comma if present
+        jsonStr = jsonStr.replace(/,\s*$/, '');
+        console.log("DEBUG: Removed partial key name");
+      }
+      
+      // Check if we're in the middle of a string value (odd number of unescaped quotes)
       const quoteMatches = jsonStr.match(/(?<!\\)"/g);
       const quoteCount = quoteMatches ? quoteMatches.length : 0;
       
-      // If odd number of quotes, we're in an unclosed string - close it
       if (quoteCount % 2 !== 0) {
         jsonStr += '"'; // Close the open string
         console.log("DEBUG: Closed unclosed string");
       }
       
-      // Close any incomplete property values with null
+      // Close any incomplete property values
       // Match patterns like "key": "val or "key": 
       jsonStr = jsonStr.replace(/"([^"]+)":\s*"?[^"]*$/, '"$1": "[truncated]"');
       jsonStr = jsonStr.replace(/"([^"]+)":\s*$/, '"$1": null');
