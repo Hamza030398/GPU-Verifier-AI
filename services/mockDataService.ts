@@ -11,9 +11,9 @@ export function generateMockAssessment(gpuModel: string): GPUAssessmentResult {
     physical: {
       overall_physical_rating: 92,
       sub_ratings: {
-        cleanliness: 95,
-        structural_integrity: 90,
-        electrical_safety: 92
+        thermal_solution: 95,
+        pcb_integrity: 90,
+        component_quality: 92
       },
       ai_feedback_comments: `Visual analysis of ${modelName} shows excellent condition. Minor dust accumulation on fans (-5%). No visible PCB damage, capacitor bulging, or corrosion. All thermal pads intact. Backplate screws present and undamaged. PCIe connector gold plating intact with minimal wear.`
     },
@@ -74,9 +74,9 @@ export function generateMockAssessmentWithIssues(gpuModel: string): GPUAssessmen
     physical: {
       overall_physical_rating: 65,
       sub_ratings: {
-        cleanliness: 60,
-        structural_integrity: 70,
-        electrical_safety: 65
+        thermal_solution: 60,
+        pcb_integrity: 70,
+        component_quality: 65
       },
       ai_feedback_comments: `Significant dust buildup on heatsink fins (-20%). Thermal paste appears dried/requiring replacement. One fan blade shows minor damage. PCB shows signs of previous repair near power delivery section. Corrosion visible on backplate screws. Recommend thorough cleaning and repaste before use.`
     },
@@ -111,9 +111,9 @@ export function generateMockAssessmentFake(gpuModel: string): GPUAssessmentResul
     physical: {
       overall_physical_rating: 30,
       sub_ratings: {
-        cleanliness: 40,
-        structural_integrity: 25,
-        electrical_safety: 25
+        thermal_solution: 40,
+        pcb_integrity: 25,
+        component_quality: 25
       },
       ai_feedback_comments: `CRITICAL: Obvious counterfeit detected. Labels printed with low-quality ink. PCB color mismatch (blue instead of green). Missing capacitors near GPU core. Solder joints poor quality with visible flux residue. Serial number sticker appears reattached. Power connector pins misaligned.`
     },

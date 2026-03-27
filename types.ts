@@ -45,9 +45,9 @@ export const IMAGE_INSTRUCTIONS: Record<ImageType, string> = {
 };
 
 export interface PhysicalSubRatings {
-  cleanliness: number;
-  structural_integrity: number;
-  electrical_safety: number;
+  thermal_solution: number;      // Was: cleanliness - now covers cooling system, fans, thermal paste
+  pcb_integrity: number;         // Was: structural_integrity - board condition, solder joints, trace damage
+  component_quality: number;     // Was: electrical_safety - capacitors, VRMs, power delivery, connector condition
 }
 
 export interface PhysicalAnalysis {

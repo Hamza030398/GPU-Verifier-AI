@@ -13,7 +13,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
   // Defensive defaults to prevent crashes
   const physical = data.physical || { 
     overall_physical_rating: 0, 
-    sub_ratings: { cleanliness: 0, structural_integrity: 0, electrical_safety: 0 },
+    sub_ratings: { thermal_solution: 0, pcb_integrity: 0, component_quality: 0 },
     ai_feedback_comments: "No data available"
   };
   const performance = data.performance || { 
@@ -72,9 +72,9 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
     content += `---------------------------------------------\n`;
     content += `Overall Rating: ${physical.overall_physical_rating}/10\n`;
     content += `Sub-ratings:\n`;
-    content += `  - Cleanliness: ${physical.sub_ratings.cleanliness}/10\n`;
-    content += `  - Structural Integrity: ${physical.sub_ratings.structural_integrity}/10\n`;
-    content += `  - Electrical Safety: ${physical.sub_ratings.electrical_safety}/10\n\n`;
+    content += `  - Thermal Solution: ${physical.sub_ratings.thermal_solution}/10\n`;
+    content += `  - PCB Integrity: ${physical.sub_ratings.pcb_integrity}/10\n`;
+    content += `  - Component Quality: ${physical.sub_ratings.component_quality}/10\n\n`;
     content += `AI Feedback:\n${physical.ai_feedback_comments}\n\n`;
 
     content += `PERFORMANCE & AUTHENTICITY\n`;
@@ -144,9 +144,9 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ data, onRese
   };
 
   const physicalChartData = [
-    { name: 'Cleanliness', value: physical.sub_ratings.cleanliness },
-    { name: 'Structure', value: physical.sub_ratings.structural_integrity },
-    { name: 'Safety', value: physical.sub_ratings.electrical_safety },
+    { name: 'Thermal Solution', value: physical.sub_ratings.thermal_solution },
+    { name: 'PCB Integrity', value: physical.sub_ratings.pcb_integrity },
+    { name: 'Component Quality', value: physical.sub_ratings.component_quality },
   ];
 
   return (

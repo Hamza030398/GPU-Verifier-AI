@@ -34,11 +34,11 @@ GPU Model: ${gpuModel}
 Market Context: ${summary}
 
 Provide a detailed assessment focusing on:
-1. Physical condition - scratches, dust, damage, corrosion, overall cleanliness
-2. Structural integrity - PCB condition, component alignment, solder quality
-3. Authenticity - signs of counterfeit, refurbishment, or tampering
-4. Connector condition - PCIe pins, power connectors, display outputs
-5. Thermal solution - heatsink/fan condition
+1. Thermal Solution - fan condition, heatsink dust buildup, thermal pad/paste integrity
+2. PCB Integrity - board condition, solder joint quality, trace damage, capacitor/VRM health
+3. Component Quality - power delivery system, connector condition, capacitor swelling
+4. Authenticity - signs of counterfeit, refurbishment, or tampering
+5. Connector Condition - PCIe pins, power connectors, display outputs
 
 Return ONLY valid JSON in this exact structure:
 
@@ -46,9 +46,9 @@ Return ONLY valid JSON in this exact structure:
   "physical": {
     "overall_physical_rating": 85,
     "sub_ratings": {
-      "cleanliness": 80,
-      "structural_integrity": 90,
-      "electrical_safety": 85
+      "thermal_solution": 80,
+      "pcb_integrity": 90,
+      "component_quality": 85
     },
     "ai_feedback_comments": "Detailed visual assessment of physical condition from images"
   },
