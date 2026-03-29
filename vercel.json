@@ -10,7 +10,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/index.html",
+      "headers": {
+        "X-Robots-Tag": "index, follow"
+      }
     }
   ]
 }
