@@ -140,6 +140,45 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
+        {/* SEO Content Section */}
+        <section className="mb-12 pb-8 border-b border-slate-800">
+          <h1 className="text-4xl font-bold text-white mb-4">GPU Verifier AI</h1>
+          <p className="text-lg text-slate-300 mb-4 max-w-3xl">
+            GPU Verifier AI is an AI-powered tool to verify GPU performance, detect fake benchmarks, and validate hardware reliability. Upload your GPU results and get intelligent analysis instantly.
+          </p>
+          <h2 className="text-2xl font-semibold text-white mb-3">What does GPU Verifier AI do?</h2>
+          <p className="text-slate-400 mb-6 max-w-3xl">
+            It analyzes GPU benchmark data using AI models to identify anomalies, inconsistencies, and potential manipulation in performance results. Our advanced vision analysis examines physical GPU photos, FurMark stress tests, and GPU-Z specifications to provide comprehensive authenticity verification.
+          </p>
+          <h2 className="text-2xl font-semibold text-white mb-3">Key Features</h2>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-300">
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>Detect fake or manipulated GPU benchmarks</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>AI-based anomaly detection</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>Fast and automated GPU validation</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>Physical condition assessment via AI vision</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>Authenticity verification against manufacturer specs</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-1">✓</span>
+              <span>Live market price analysis and valuation</span>
+            </li>
+          </ul>
+        </section>
+
         {error && (
           <div className={`mb-8 p-4 rounded-lg flex items-center gap-3 border ${isColdStarting ? 'bg-amber-500/10 border-amber-500/50 text-amber-200' : 'bg-rose-500/10 border-rose-500/50 text-rose-300'}`}>
             <AlertCircle className={`w-5 h-5 ${isColdStarting ? 'text-amber-400' : 'text-rose-400'}`} />
